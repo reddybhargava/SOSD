@@ -13,6 +13,7 @@
 #include "competitors/fast.h"
 #include "competitors/stx_btree.h"
 #include "competitors/rm_tip.h"
+#include "competitors/pgm_index.h"
 
 using namespace std;
 
@@ -92,6 +93,7 @@ int main(int argc, char* argv[]) {
       run_rmi_linear(uint32, uniform_sparse_200M, rmi);
 
       benchmark.Run<RadixSpline<uint32_t>>();
+      benchmark.Run<PGM<uint32_t>>();
       benchmark.Run<BinarySearch<uint32_t>>();
       benchmark.Run<InterpolationSearch<uint32_t>>();
       benchmark.Run<RadixBinarySearch<uint32_t>>();
@@ -121,6 +123,7 @@ int main(int argc, char* argv[]) {
       run_rmi_linear(uint64, uniform_sparse_200M, rmi);
 
       benchmark.Run<RadixSpline<uint64_t>>();
+      benchmark.Run<PGM<uint64_t>>();
       benchmark.Run<RadixBinarySearch<uint64_t>>();
       benchmark.Run<ART>();
       benchmark.Run<BinarySearch<uint64_t>>();

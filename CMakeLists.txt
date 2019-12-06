@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(SOSD)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -Wall -g -march=native")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -22,3 +22,6 @@ target_link_libraries(generate Threads::Threads)
 add_executable(benchmark benchmark.cc competitors/rmi/all_rmis.h ${SOURCE_FILES} ${RMI_SOURCES})
 target_include_directories(benchmark PRIVATE "competitors/stx-btree-0.9/include")
 target_link_libraries(benchmark Threads::Threads)
+
+add_subdirectory(PGM-index EXCLUDE_FROM_ALL)
+target_link_libraries(benchmark pgmindexlib)

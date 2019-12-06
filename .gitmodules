@@ -1,3 +1,6 @@
 [submodule "RMI"]
 	path = RMI
 	url = https://github.com/learnedsystems/RMI.git
+[submodule "competitors/PGM-index"]
+	path = PGM-index
+	url = https://github.com/gvinciguerra/PGM-index.git
