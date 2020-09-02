@@ -19,3 +19,6 @@
 [submodule "competitors/ALEX"]
 	path = competitors/ALEX
 	url = https://github.com/microsoft/ALEX.git
+[submodule "competitors/FITing-Tree"]
+	path = competitors/FITing-Tree
+	url = https://github.com/RKolla99/FITing-Tree.git
