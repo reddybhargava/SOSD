@@ -36,6 +36,19 @@ public:
     return (SearchBound){start, stop};
   }
 
+  uint64_t Insert(const std::vector<KeyValue<KeyType>> &data) {
+    
+    uint64_t timing_sum = 0, timing;
+    for (auto kv : data) {
+      timing = util::timing([&kv] {
+        alex_.insert(kv.key, kv.value)
+      });
+      timing_sum += timing;
+    }
+    
+    return timing_sum;
+  }
+
   std::string name() const {
     return "ALEX";
   }
@@ -47,6 +60,10 @@ public:
 
   int variant() const {
     return VariantNumber;
+  }
+
+  bool insertion_possible() const {
+    return true;
   }
 
 private:

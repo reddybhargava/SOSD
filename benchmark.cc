@@ -27,7 +27,7 @@
 using namespace std;
 
 #define check_only(tag, code) if ((!only_mode) || only == tag) { code; }
-#define add_search_type(name, func, type, search_class) { if (search_type == (name)) { auto search = search_class<type>(); sosd::Benchmark<type, search_class> benchmark(filename, lookups, num_repeats, perf, build, fence, cold_cache, track_errors, num_threads, search); func(benchmark, pareto, only_mode, only, filename); found_search_type = true; break; } }
+#define add_search_type(name, func, type, search_class) { if (search_type == (name)) { auto search = search_class<type>(); sosd::Benchmark<type, search_class> benchmark(filename, lookups, lookups, num_repeats, perf, build, fence, cold_cache, track_errors, num_threads, search); func(benchmark, pareto, only_mode, only, filename); found_search_type = true; break; } }
 
 template<class Benchmark>
 void execute_32_bit(Benchmark benchmark, bool pareto,

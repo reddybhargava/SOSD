@@ -12,4 +12,8 @@ class Competitor {
     return 0;
   }
 
+  bool insertion_possible() const {
+    return false;
+  }
+
 };
