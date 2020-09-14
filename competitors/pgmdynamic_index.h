@@ -51,12 +51,11 @@ public:
   }
 
   SearchBound EqualityLookup(const KeyType lookup_key) const {
-    auto approx_range = pgm_.find_approximate_position(lookup_key);
+    auto approx_range = pgm_.find(lookup_key);
     auto lo = approx_range.lo;
     auto hi = approx_range.hi;
 
     return (SearchBound){ lo, hi + 1 };
-
   }
 
   template<typename KT>

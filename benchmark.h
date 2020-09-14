@@ -59,6 +59,7 @@ class Benchmark {
     std::vector<KeyType> keys = util::load_data<KeyType>(data_filename_);
 
     // Load insert data
+    inserts_filename_ = "./data/books_200M_uint32_equality_lookups_2M";
     std::vector<KeyType> insert_keys = util::load_data<KeyType>(inserts_filename_);
 
     log_sum_search_bound_ = 0.0;
@@ -75,18 +76,18 @@ class Benchmark {
     // Add artificial values to keys.
     data_ = util::add_values(keys);
     insert_data_ = util::add_values(insert_keys);
-    uint64_t num_inserts = 1e6;
 
     // Load lookups.
     lookups_ = util::load_data<EqualityLookup<KeyType>>(lookups_filename_);
 
     // Create the data for the index (key -> position).
-    for (uint64_t pos = 0; pos < data_.size()-num_inserts; pos++) {
+    for (uint64_t pos = 0; pos < data_.size(); pos++) {
       index_data_.push_back((KeyValue<KeyType>) {data_[pos].key, pos});
     }
 
-    for (uint64_t pos = num_inserts; pos < data.size(); pos++) {
-      index_insert_data_.push_back((KeyValue<KeyType>) {insert_data_[pos].key, pos});
+    uint64_t bulk_load_size = data_.size();
+    for (uint64_t pos = 0; pos < insert_data_.size(); pos++) {
+      index_insert_data_.push_back((KeyValue<KeyType>) {insert_data_[pos].key, bulk_load_size + pos});
     }
 
   }
@@ -106,9 +107,6 @@ class Benchmark {
     
     // Do equality lookups.
     if constexpr (!sosd_config::fast_mode) {
-      if(index.insertion_possible()) {
-        individual_ns_sum_inserts = index.Insert(index_insert_data_);
-      }
 
       if (perf) {
         checkLinux(({
@@ -137,7 +135,10 @@ class Benchmark {
       DoEqualityLookups<Index, false, false, false>(index);
       PrintResult(index);
     }
-    
+
+    if(index.insertion_possible()) {
+      individual_ns_sum_inserts = index.template Insert<KeyType>(index_insert_data_);
+    }
     
     first_run_ = false;
   }
@@ -331,7 +332,7 @@ private:
     if (index.insertion_possible()) {
       const double ns_per_insert = static_cast<double>(individual_ns_sum_inserts) 
         / index_insert_data_.size();
-      all_times << ", insertion_time: " <<  ns_per_insert;
+      all_times << ", insertion_time: " <<  ns_per_insert << ", " << individual_ns_sum_inserts;
     }
     
     
@@ -351,7 +352,7 @@ private:
   uint64_t individual_ns_sum_inserts = 0;
   const std::string data_filename_;
   const std::string lookups_filename_;
-  const std::string inserts_filename_;
+  std::string inserts_filename_;
   std::vector<Row<KeyType>> data_;
   std::vector<Row<KeyType>> insert_data_;
   std::vector<KeyValue<KeyType>> index_data_;

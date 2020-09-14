@@ -1,7 +1,7 @@
 #include "benchmarks/common.h"
 #include "benchmark.h"
 #include "benchmarks/benchmark_pgm.h"
-#include "competitors/pgm_index.h"
+#include "competitors/pgmdynamic_index.h"
 
 template<template<typename> typename Searcher>
 void benchmark_32_pgm(sosd::Benchmark<uint32_t, Searcher>& benchmark, bool pareto) {

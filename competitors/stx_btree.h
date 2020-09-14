@@ -53,6 +53,20 @@ class STXBTree : public Competitor {
     return (SearchBound){ start, stop };
   }
 
+  template<typename KT>
+  uint64_t Insert(const std::vector<KeyValue<KT>> &data) {
+    
+    uint64_t timing_sum = 0, timing;
+    for (auto kv : data) {
+      timing = util::timing([&] {
+        btree_.insert(kv.key, kv.value);
+      });
+      timing_sum += timing;
+    }
+    
+    return timing_sum;
+  }
+
   std::string name() const {
     return "BTree";
   }
@@ -63,6 +77,10 @@ class STXBTree : public Competitor {
 
   int variant() const { return size_scale; }
 
+  bool insertion_possible() const {
+    return true;
+  }
+  
  private:
   // Using a multimap here since keys may contain duplicates.
   uint64_t total_allocation_size = 0;

@@ -16,4 +16,8 @@ class Competitor {
     return false;
   }
 
+  template<typename KeyType>
+  uint64_t Insert(const std::vector<KeyValue<KeyType>> &data) {
+    return 0;
+  }
 };

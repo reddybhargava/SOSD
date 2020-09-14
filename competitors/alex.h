@@ -15,7 +15,7 @@ public:
     std::pair<KeyType, ValueType> *bulk_data = new std::pair<KeyType, ValueType>[num_keys];
 
     for (int pos = 0; pos < num_keys; pos++)
-      bulk_data[pos] = {data[pos].key, pos};
+      bulk_data[pos] = {data[pos].key, data[pos].value};
 
     return util::timing([&] {
       alex_.bulk_load(bulk_data, num_keys);
@@ -36,16 +36,26 @@ public:
     return (SearchBound){start, stop};
   }
 
-  uint64_t Insert(const std::vector<KeyValue<KeyType>> &data) {
+  template<typename KT>
+  uint64_t Insert(const std::vector<KeyValue<KT>> &data) {
     
-    uint64_t timing_sum = 0, timing;
-    for (auto kv : data) {
-      timing = util::timing([&kv] {
-        alex_.insert(kv.key, kv.value)
-      });
+    uint64_t timing_sum = 0;
+    // for (auto kv : data) {
+    //   timing = util::timing([&] {
+    //     alex_.insert(kv.key, kv.value);
+    //   });
+    //   timing_sum += timing;
+    // }
+    for(auto kv: data) {
+      const auto start = std::chrono::high_resolution_clock::now();
+      alex_.insert(kv.key, kv.value);
+      const auto end = std::chrono::high_resolution_clock::now();
+      const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        end - start).count();
+      
       timing_sum += timing;
     }
-    
+
     return timing_sum;
   }
 

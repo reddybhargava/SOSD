@@ -33,13 +33,13 @@ void benchmark_64_rmi(sosd::Benchmark<uint64_t, Searcher>& benchmark,
   run_rmi_binary_pareto(uint64, wiki_ts_200M);
   run_rmi_binary_pareto(uint64, books_200M);
   
-  run_rmi_binary_pareto(uint64, osm_cellids_400M);
-  run_rmi_binary_pareto(uint64, osm_cellids_600M);
-  run_rmi_binary_pareto(uint64, osm_cellids_800M);
+  // run_rmi_binary_pareto(uint64, osm_cellids_400M);
+  // run_rmi_binary_pareto(uint64, osm_cellids_600M);
+  // run_rmi_binary_pareto(uint64, osm_cellids_800M);
   
-  run_rmi_binary_pareto(uint64, books_400M);
-  run_rmi_binary_pareto(uint64, books_600M);
-  run_rmi_binary_pareto(uint64, books_800M);
+  // run_rmi_binary_pareto(uint64, books_400M);
+  // run_rmi_binary_pareto(uint64, books_600M);
+  // run_rmi_binary_pareto(uint64, books_800M);
 }
 
 
