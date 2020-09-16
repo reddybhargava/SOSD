@@ -23,39 +23,45 @@ class PGM : public Competitor {
 public:
   uint64_t Build(const std::vector<KeyValue<KeyType>>& data) {
     
-    const auto extract_key = [](KeyValue<KeyType> kv) { 
-        auto key = kv.key, value = kv.value;
-        return std::make_pair(key, value); 
-    };
+    const auto extract_key
+      = [](KeyValue<KeyType> kv) { return kv.key; };
 
-    // This code uses a boost transform iterator to avoid a copy. It
-    // seems to be much slower, however.
-    /*
-    auto it_begin = boost::make_transform_iterator(data.begin(), extract_key);
-    auto it_end = boost::make_transform_iterator(data.end(), extract_key);
-    pgm_ = PGMIndex<KeyType, pgm_error, 4>(it_begin, it_end);
-    */
-
-    // don't count the data copy time against the PGM build time
-    std::vector<std::pair<KeyType, ValueType>> keys;
+    std::vector<KeyType> keys;
     keys.reserve(data.size());
     std::transform(data.begin(), data.end(),
                    std::back_inserter(keys),
                    extract_key);
 
+    pgm_ = decltype(pgm_)(keys.begin(), keys.end());
+    keys.clear();
+
+    // Dynamic PGM
+    const auto d_extract_key = [](KeyValue<KeyType> kv) { 
+        auto key = kv.key, value = kv.value;
+        return std::make_pair(key, value); 
+    };
+
+    // don't count the data copy time against the PGM build time
+    std::vector<std::pair<KeyType, ValueType>> d_keys;
+    keys.reserve(data.size());
+    std::transform(data.begin(), data.end(),
+                   std::back_inserter(d_keys),
+                   d_extract_key);
+
     uint64_t build_time = util::timing([&] {
-      pgm_ = decltype(pgm_)(keys.begin(), keys.end());
+      dpgm_ = decltype(dpgm_)(d_keys.begin(), d_keys.end());
     });
 
     return build_time;
   }
 
   SearchBound EqualityLookup(const KeyType lookup_key) const {
-    auto approx_range = pgm_.find(lookup_key);
+    auto approx_range = pgm_.find_approximate_position(lookup_key);
     auto lo = approx_range.lo;
     auto hi = approx_range.hi;
 
     return (SearchBound){ lo, hi + 1 };
+
   }
 
   template<typename KT>
@@ -64,7 +70,7 @@ public:
     uint64_t timing_sum = 0, timing;
     for (auto kv : data) {
       timing = util::timing([&] {
-        pgm_.insert(kv.key, kv.value);
+        dpgm_.insert(kv.key, kv.value);
       });
       timing_sum += timing;
     }
@@ -73,7 +79,7 @@ public:
   }
 
   std::string name() const {
-    return "PGM";
+    return "DPGM";
   }
 
   std::size_t size() const {
@@ -91,7 +97,8 @@ public:
   }
 
 private:
-  DynamicPGMIndex<KeyType, ValueType, PGMIndex<KeyType, pgm_error, 4>> pgm_;
+  PGMIndex<KeyType, pgm_error, 4> pgm_;
+  DynamicPGMIndex<KeyType, ValueType, PGMIndex<KeyType, pgm_error, 4>> dpgm_;
 };
 
 #endif //SOSDB_PGM_H

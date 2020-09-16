@@ -120,25 +120,26 @@ class Benchmark {
         if (num_threads_ > 1)
           util::fail("cold cache not supported with multiple threads");
         DoEqualityLookups<Index, true, false, true>(index);
-        PrintResult(index);
+        // PrintResult(index);
       } else if (fence) {
         DoEqualityLookups<Index, false, true, false>(index);
-        PrintResult(index);
+        // PrintResult(index);
       } else {
         DoEqualityLookups<Index, false, false, false>(index);
-        PrintResult(index);
+        // PrintResult(index);
       }
     } else {
       if (perf || cold_cache || fence) {
         util::fail("Perf, cold cache, and fence mode require full builds. Disable fast mode.");
       }
       DoEqualityLookups<Index, false, false, false>(index);
-      PrintResult(index);
+      // PrintResult(index);
     }
 
     if(index.insertion_possible()) {
       individual_ns_sum_inserts = index.template Insert<KeyType>(index_insert_data_);
     }
+    PrintResult(index);
     
     first_run_ = false;
   }

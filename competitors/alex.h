@@ -40,21 +40,21 @@ public:
   uint64_t Insert(const std::vector<KeyValue<KT>> &data) {
     
     uint64_t timing_sum = 0;
-    // for (auto kv : data) {
-    //   timing = util::timing([&] {
-    //     alex_.insert(kv.key, kv.value);
-    //   });
-    //   timing_sum += timing;
-    // }
-    for(auto kv: data) {
-      const auto start = std::chrono::high_resolution_clock::now();
-      alex_.insert(kv.key, kv.value);
-      const auto end = std::chrono::high_resolution_clock::now();
-      const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        end - start).count();
-      
+    for (auto kv : data) {
+      auto timing = util::timing([&] {
+        alex_.insert(kv.key, kv.value);
+      });
       timing_sum += timing;
     }
+    // for(auto kv: data) {
+    //   const auto start = std::chrono::high_resolution_clock::now();
+    //   alex_.insert(kv.key, kv.value);
+    //   const auto end = std::chrono::high_resolution_clock::now();
+    //   const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    //     end - start).count();
+      
+    //   timing_sum += timing;
+    // }
 
     return timing_sum;
   }

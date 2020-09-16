@@ -2,7 +2,7 @@
 
 #include "../util.h"
 #include "base.h"
-#include "competitors/FITing-Tree/include/fiting_tree.h"
+#include "competitors/FITing-Tree/include/fiting_tree/fiting_tree.h"
 
 
 template <class KeyType, uint16_t Error>
@@ -24,7 +24,7 @@ public:
       });
   }
 
-  SearchBound EqualityLookup(const KeyType lookup_key) {
+  SearchBound EqualityLookup(const KeyType lookup_key) const {
       const auto pos = fiting_tree_.get_approx_pos(lookup_key);
       return (SearchBound) {pos.lo, pos.hi};
   }

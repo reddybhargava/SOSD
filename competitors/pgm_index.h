@@ -9,13 +9,10 @@
 #include <iostream>
 #include <algorithm>
 #include "pgm_index.hpp"
-#include "pgm_index_dynamic.hpp"
 //#include <functional>
 //#include <boost/iterator/transform_iterator.hpp>
 //#include <boost/range/adaptors.hpp>
 
-
-#define ValueType uint64_t
 
 template<class KeyType, int pgm_error>
 class PGM : public Competitor {
@@ -23,10 +20,8 @@ class PGM : public Competitor {
 public:
   uint64_t Build(const std::vector<KeyValue<KeyType>>& data) {
     
-    const auto extract_key = [](KeyValue<KeyType> kv) { 
-        auto key = kv.key, value = kv.value;
-        return std::make_pair(key, value); 
-    };
+    const auto extract_key
+      = [](KeyValue<KeyType> kv) { return kv.key; };
 
     // This code uses a boost transform iterator to avoid a copy. It
     // seems to be much slower, however.
@@ -37,7 +32,7 @@ public:
     */
 
     // don't count the data copy time against the PGM build time
-    std::vector<std::pair<KeyType, ValueType>> keys;
+    std::vector<KeyType> keys;
     keys.reserve(data.size());
     std::transform(data.begin(), data.end(),
                    std::back_inserter(keys),
@@ -59,20 +54,6 @@ public:
 
   }
 
-  template<typename KT>
-  uint64_t Insert(const std::vector<KeyValue<KT>> &data) {
-    
-    uint64_t timing_sum = 0, timing;
-    for (auto kv : data) {
-      timing = util::timing([&] {
-        pgm_.insert(kv.key, kv.value);
-      });
-      timing_sum += timing;
-    }
-    
-    return timing_sum;
-  }
-
   std::string name() const {
     return "PGM";
   }
@@ -87,12 +68,8 @@ public:
 
   int variant() const { return pgm_error; }
 
-  bool insertion_possible() const {
-    return true;
-  }
-
 private:
-  DynamicPGMIndex<KeyType, ValueType, PGMIndex<KeyType, pgm_error, 4>> pgm_;
+  PGMIndex<KeyType, pgm_error, 4> pgm_;
 };
 
 #endif //SOSDB_PGM_H
