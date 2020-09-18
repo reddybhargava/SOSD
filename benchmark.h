@@ -60,6 +60,7 @@ class Benchmark {
 
     // Load insert data
     inserts_filename_ = "./data/books_200M_uint32_equality_lookups_2M";
+    // inserts_filename_ = lookups_filename;
     std::vector<KeyType> insert_keys = util::load_data<KeyType>(inserts_filename_);
 
     log_sum_search_bound_ = 0.0;

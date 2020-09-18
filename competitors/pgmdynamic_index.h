@@ -10,58 +10,40 @@
 #include <algorithm>
 #include "pgm_index.hpp"
 #include "pgm_index_dynamic.hpp"
-//#include <functional>
-//#include <boost/iterator/transform_iterator.hpp>
-//#include <boost/range/adaptors.hpp>
 
 
 #define ValueType uint64_t
 
 template<class KeyType, int pgm_error>
-class PGM : public Competitor {
+class DPGM : public Competitor {
 
 public:
   uint64_t Build(const std::vector<KeyValue<KeyType>>& data) {
-    
-    const auto extract_key
-      = [](KeyValue<KeyType> kv) { return kv.key; };
 
-    std::vector<KeyType> keys;
-    keys.reserve(data.size());
-    std::transform(data.begin(), data.end(),
-                   std::back_inserter(keys),
-                   extract_key);
-
-    pgm_ = decltype(pgm_)(keys.begin(), keys.end());
-    keys.clear();
-
-    // Dynamic PGM
-    const auto d_extract_key = [](KeyValue<KeyType> kv) { 
+    const auto extract_key = [](KeyValue<KeyType> kv) { 
         auto key = kv.key, value = kv.value;
         return std::make_pair(key, value); 
     };
 
     // don't count the data copy time against the PGM build time
-    std::vector<std::pair<KeyType, ValueType>> d_keys;
+    std::vector<std::pair<KeyType, ValueType>> keys;
     keys.reserve(data.size());
     std::transform(data.begin(), data.end(),
-                   std::back_inserter(d_keys),
-                   d_extract_key);
+                   std::back_inserter(keys),
+                   extract_key);
 
     uint64_t build_time = util::timing([&] {
-      dpgm_ = decltype(dpgm_)(d_keys.begin(), d_keys.end());
+      dpgm_ = decltype(dpgm_)(keys.begin(), keys.end());
     });
 
     return build_time;
   }
 
   SearchBound EqualityLookup(const KeyType lookup_key) const {
-    auto approx_range = pgm_.find_approximate_position(lookup_key);
-    auto lo = approx_range.lo;
-    auto hi = approx_range.hi;
+    auto pos = dpgm_.find(lookup_key);
+    auto lo = pos->value(), hi = pos->value();
 
-    return (SearchBound){ lo, hi + 1 };
-
+    return (SearchBound){ lo, hi };
   }
 
   template<typename KT>
@@ -83,7 +65,7 @@ public:
   }
 
   std::size_t size() const {
-    return pgm_.size_in_bytes();
+    return dpgm_.size_in_bytes();
   }
 
   bool applicable(bool unique, const std::string& data_filename) const {
@@ -97,7 +79,6 @@ public:
   }
 
 private:
-  PGMIndex<KeyType, pgm_error, 4> pgm_;
   DynamicPGMIndex<KeyType, ValueType, PGMIndex<KeyType, pgm_error, 4>> dpgm_;
 };
 

@@ -12,6 +12,7 @@
 #include "benchmarks/benchmark_wormhole.h"
 #include "benchmarks/benchmark_alex.h"
 #include "benchmarks/benchmark_fitingtree.h"
+#include "benchmarks/benchmark_pgmdynamic.h"
 #include "util.h"
 #include "utils/cxxopts.hpp"
 #include "config.h"
@@ -42,6 +43,7 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
   check_only("FAST", benchmark_32_fast(benchmark, pareto));
   check_only("ALEX", benchmark_32_alex(benchmark, pareto));
   check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
+  check_only("DPGM", benchmark_32_dpgm(benchmark, pareto));
 #ifndef __APPLE__
   #ifndef DISABLE_FST
   check_only("FST", benchmark_32_fst(benchmark, pareto));
@@ -71,6 +73,7 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
   check_only("FAST", benchmark_64_fast(benchmark, pareto));
   check_only("ALEX", benchmark_64_alex(benchmark, pareto));
   check_only("FITing", benchmark_64_fitingtree(benchmark, pareto));
+  check_only("DPGM", benchmark_64_dpgm(benchmark, pareto));
 #ifndef __APPLE__
   #ifndef DISABLE_FST
   check_only("FST", benchmark_64_fst(benchmark, pareto));
