@@ -58,11 +58,6 @@ class Benchmark {
     // Load data.
     std::vector<KeyType> keys = util::load_data<KeyType>(data_filename_);
 
-    // Load insert data
-    inserts_filename_ = "./data/books_200M_uint32_equality_lookups_2M";
-    // inserts_filename_ = lookups_filename;
-    std::vector<KeyType> insert_keys = util::load_data<KeyType>(inserts_filename_);
-
     log_sum_search_bound_ = 0.0;
     l1_sum_search_bound_ = 0.0;
     l2_sum_search_bound_ = 0.0;
@@ -76,7 +71,6 @@ class Benchmark {
       std::cout << "data contains duplicates" << std::endl;
     // Add artificial values to keys.
     data_ = util::add_values(keys);
-    insert_data_ = util::add_values(insert_keys);
 
     // Load lookups.
     lookups_ = util::load_data<EqualityLookup<KeyType>>(lookups_filename_);
@@ -86,11 +80,19 @@ class Benchmark {
       index_data_.push_back((KeyValue<KeyType>) {data_[pos].key, pos});
     }
 
-    uint64_t bulk_load_size = data_.size();
-    for (uint64_t pos = 0; pos < insert_data_.size(); pos++) {
-      index_insert_data_.push_back((KeyValue<KeyType>) {insert_data_[pos].key, bulk_load_size + pos});
-    }
 
+    if (inserts_filename_ != "") {
+      perform_insertion = true;
+
+      // Load insert data
+      std::vector<KeyType> insert_keys = util::load_data<KeyType>(inserts_filename_);
+
+      uint64_t bulk_load_size = data_.size();
+      for (uint64_t pos = 0; pos < insert_keys.size(); pos++) {
+        index_insert_data_.push_back((KeyValue<KeyType>) {insert_keys[pos], bulk_load_size + pos});
+      }
+    }
+  
   }
 
   template<class Index>
@@ -137,7 +139,7 @@ class Benchmark {
       // PrintResult(index);
     }
 
-    if(index.insertion_possible()) {
+    if(perform_insertion && index.insertion_possible()) {
       individual_ns_sum_inserts = index.template Insert<KeyType>(index_insert_data_);
     }
     PrintResult(index);
@@ -331,10 +333,11 @@ private:
         /lookups_.size();
       all_times << "," << ns_per_lookup;
     }
-    if (index.insertion_possible()) {
+
+    if (perform_insertion && index.insertion_possible()) {
       const double ns_per_insert = static_cast<double>(individual_ns_sum_inserts) 
         / index_insert_data_.size();
-      all_times << ", insertion_time: " <<  ns_per_insert << ", " << individual_ns_sum_inserts;
+      all_times << "," <<  ns_per_insert;
     }
     
     
@@ -354,9 +357,9 @@ private:
   uint64_t individual_ns_sum_inserts = 0;
   const std::string data_filename_;
   const std::string lookups_filename_;
-  std::string inserts_filename_;
+  const std::string inserts_filename_;
+  bool perform_insertion = false;
   std::vector<Row<KeyType>> data_;
-  std::vector<Row<KeyType>> insert_data_;
   std::vector<KeyValue<KeyType>> index_data_;
   std::vector<KeyValue<KeyType>> index_insert_data_;
   bool unique_keys_;

@@ -12,6 +12,7 @@
 #include "benchmarks/benchmark_wormhole.h"
 #include "benchmarks/benchmark_alex.h"
 #include "benchmarks/benchmark_fitingtree.h"
+#include "benchmarks/benchmark_fitingtreebuffered.h"
 #include "benchmarks/benchmark_pgmdynamic.h"
 #include "util.h"
 #include "utils/cxxopts.hpp"
@@ -28,7 +29,7 @@
 using namespace std;
 
 #define check_only(tag, code) if ((!only_mode) || only == tag) { code; }
-#define add_search_type(name, func, type, search_class) { if (search_type == (name)) { auto search = search_class<type>(); sosd::Benchmark<type, search_class> benchmark(filename, lookups, lookups, num_repeats, perf, build, fence, cold_cache, track_errors, num_threads, search); func(benchmark, pareto, only_mode, only, filename); found_search_type = true; break; } }
+#define add_search_type(name, func, type, search_class) { if (search_type == (name)) { auto search = search_class<type>(); sosd::Benchmark<type, search_class> benchmark(filename, lookups, inserts, num_repeats, perf, build, fence, cold_cache, track_errors, num_threads, search); func(benchmark, pareto, only_mode, only, filename); found_search_type = true; break; } }
 
 template<class Benchmark>
 void execute_32_bit(Benchmark benchmark, bool pareto,
@@ -43,6 +44,7 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
   check_only("FAST", benchmark_32_fast(benchmark, pareto));
   check_only("ALEX", benchmark_32_alex(benchmark, pareto));
   check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
+  check_only("BufferedFITing", benchmark_32_bufferedfitingtree(benchmark, pareto));
   check_only("DPGM", benchmark_32_dpgm(benchmark, pareto));
 #ifndef __APPLE__
   #ifndef DISABLE_FST
@@ -73,6 +75,7 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
   check_only("FAST", benchmark_64_fast(benchmark, pareto));
   check_only("ALEX", benchmark_64_alex(benchmark, pareto));
   check_only("FITing", benchmark_64_fitingtree(benchmark, pareto));
+  check_only("BufferedFITing", benchmark_64_bufferedfitingtree(benchmark, pareto));
   check_only("DPGM", benchmark_64_dpgm(benchmark, pareto));
 #ifndef __APPLE__
   #ifndef DISABLE_FST
@@ -94,6 +97,7 @@ int main(int argc, char* argv[]) {
   options.add_options()
       ("data", "Data file with keys", cxxopts::value<std::string>())
       ("lookups", "Lookup key (query) file", cxxopts::value<std::string>())
+      ("i,inserts", "Insert keys file", cxxopts::value<std::string>()->default_value(""))
       ("help", "Displays help")
       ("r,repeats",
        "Number of repeats",
@@ -139,6 +143,7 @@ int main(int argc, char* argv[]) {
   const bool pareto = result.count("pareto");
   const std::string filename = result["data"].as<std::string>();
   const std::string lookups = result["lookups"].as<std::string>();
+  const std::string inserts = result["inserts"].as<std::string>();
   const std::string search_type = result["search"].as<std::string>();
   const bool only_mode = result.count("only") || std::getenv("SOSD_ONLY");
   std::string only;

@@ -173,9 +173,15 @@ int main(int argc, char* argv[]) {
       }
 
       print_equality_lookup_stats(equality_lookups);
-      util::write_data(equality_lookups,
-                       filename + "_equality_lookups_"
-                           + to_nice_number(num_lookups));
+      if (negative_lookup_ratio == 1) {
+        util::write_data(equality_lookups,
+                        filename + "_inserts_"
+                            + to_nice_number(num_lookups));
+      } else {
+        util::write_data(equality_lookups,
+                        filename + "_equality_lookups_"
+                            + to_nice_number(num_lookups));
+      }
 
       break;
     }
@@ -216,9 +222,15 @@ int main(int argc, char* argv[]) {
       }
 
       print_equality_lookup_stats(equality_lookups);
-      util::write_data(equality_lookups,
-                       filename + "_equality_lookups_"
-                           + to_nice_number(num_lookups));
+      if (negative_lookup_ratio == 1) {
+        util::write_data(equality_lookups,
+                        filename + "_inserts_"
+                            + to_nice_number(num_lookups));
+      } else {
+        util::write_data(equality_lookups,
+                        filename + "_equality_lookups_"
+                            + to_nice_number(num_lookups));
+      }
 
       break;
     }

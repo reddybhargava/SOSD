@@ -24,14 +24,14 @@ build_rmi_set fb_200M_uint64
 build_rmi_set wiki_ts_200M_uint64
 
 build_rmi_set osm_cellids_200M_uint64
-build_rmi_set osm_cellids_400M_uint64
-build_rmi_set osm_cellids_600M_uint64
-build_rmi_set osm_cellids_800M_uint64
+# build_rmi_set osm_cellids_400M_uint64
+# build_rmi_set osm_cellids_600M_uint64
+# build_rmi_set osm_cellids_800M_uint64
 
 build_rmi_set books_200M_uint64
-build_rmi_set books_400M_uint64
-build_rmi_set books_600M_uint64
-build_rmi_set books_800M_uint64
+# build_rmi_set books_400M_uint64
+# build_rmi_set books_600M_uint64
+# build_rmi_set books_800M_uint64
 
 build_rmi_set books_200M_uint32
 
