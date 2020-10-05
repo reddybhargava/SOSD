@@ -77,5 +77,5 @@ public:
   }
 
 private:
-  alex::Alex<KeyType, ValueType> alex_;
+  alex::Alex<KeyType, ValueType, alex::AlexCompare, std::allocator<std::pair<KeyType,ValueType>>, false> alex_;
 };
