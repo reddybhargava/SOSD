@@ -5,6 +5,7 @@
 
 template<template<typename> typename Searcher>
 void benchmark_32_bufferedfitingtree(sosd::Benchmark<uint32_t, Searcher> &benchmark, bool pareto) {
+  benchmark.template Run<BufferedFITingTree<uint32_t, 128, 96>>();
   benchmark.template Run<BufferedFITingTree<uint32_t, 64, 32>>();
   if (pareto) {
     benchmark.template Run<BufferedFITingTree<uint32_t, 16, 8>>();
@@ -18,6 +19,7 @@ void benchmark_32_bufferedfitingtree(sosd::Benchmark<uint32_t, Searcher> &benchm
 
 template<template<typename> typename Searcher>
 void benchmark_64_bufferedfitingtree(sosd::Benchmark<uint64_t, Searcher> &benchmark, bool pareto) {
+  benchmark.template Run<BufferedFITingTree<uint64_t, 128, 96>>();
   benchmark.template Run<BufferedFITingTree<uint64_t, 64, 32>>();
   if (pareto) {
     benchmark.template Run<BufferedFITingTree<uint64_t, 16, 8>>();
