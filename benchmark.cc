@@ -4,6 +4,7 @@
 #include "benchmarks/benchmark_rmi.h"
 #include "benchmarks/benchmark_rs.h"
 #include "benchmarks/benchmark_pgm.h"
+#include "benchmarks/benchmark_pgmmod.h"
 #include "benchmarks/benchmark_art.h"
 #include "benchmarks/benchmark_btree.h"
 #include "benchmarks/benchmark_ibtree.h"
@@ -14,6 +15,7 @@
 #include "benchmarks/benchmark_fitingtree.h"
 #include "benchmarks/benchmark_fitingtreebuffered.h"
 #include "benchmarks/benchmark_pgmdynamic.h"
+#include "benchmarks/benchmark_pgmcache.h"
 #include "util.h"
 #include "utils/cxxopts.hpp"
 #include "config.h"
@@ -36,29 +38,31 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
                     bool only_mode, std::string only,
                     std::string filename) {
   // Build and probe individual indexes.
-  check_only("RMI", benchmark_32_rmi(benchmark, pareto, filename));
-  check_only("RS", benchmark_32_rs(benchmark, pareto));
+  // check_only("RMI", benchmark_32_rmi(benchmark, pareto, filename));
+  // check_only("RS", benchmark_32_rs(benchmark, pareto));
   check_only("PGM", benchmark_32_pgm(benchmark, pareto));
-  check_only("BTree", benchmark_32_btree(benchmark, pareto));
-  check_only("IBTree", benchmark_32_ibtree(benchmark, pareto));
-  check_only("FAST", benchmark_32_fast(benchmark, pareto));
-  check_only("ALEX", benchmark_32_alex(benchmark, pareto));
-  check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
-  check_only("BufferedFITing", benchmark_32_bufferedfitingtree(benchmark, pareto));
-  check_only("DPGM", benchmark_32_dpgm(benchmark, pareto));
-#ifndef __APPLE__
-  #ifndef DISABLE_FST
-  check_only("FST", benchmark_32_fst(benchmark, pareto));
-  #endif
-  check_only("Wormhole", benchmark_32_wormhole(benchmark, pareto));
-#endif
+  // check_only("PGMMod", benchmark_32_pgmmod(benchmark, pareto));
+  check_only("PGMCache", benchmark_32_pgmcache(benchmark, pareto));
+  // check_only("BTree", benchmark_32_btree(benchmark, pareto));
+  // check_only("IBTree", benchmark_32_ibtree(benchmark, pareto));
+  // check_only("FAST", benchmark_32_fast(benchmark, pareto));
+  // check_only("ALEX", benchmark_32_alex(benchmark, pareto));
+  // check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
+  // check_only("BufferedFITing", benchmark_32_bufferedfitingtree(benchmark, pareto));
+  // check_only("DPGM", benchmark_32_dpgm(benchmark, pareto));
+// #ifndef __APPLE__
+//   #ifndef DISABLE_FST
+//   check_only("FST", benchmark_32_fst(benchmark, pareto));
+//   #endif
+//   check_only("Wormhole", benchmark_32_wormhole(benchmark, pareto));
+// #endif
 
-  if (benchmark.uses_binary_search()) {
-    check_only("RBS", benchmark_32_rbs(benchmark, pareto));
-    check_only("CuckooMap", benchmark.template Run<CuckooHash>());
-    check_only("RobinHash", benchmark.template Run<RobinHash<uint32_t>>());
-    check_only("BS", benchmark.template Run<BinarySearch<uint32_t>>());
-  }
+  // if (benchmark.uses_binary_search()) {
+  //   check_only("RBS", benchmark_32_rbs(benchmark, pareto));
+  //   check_only("CuckooMap", benchmark.template Run<CuckooHash>());
+  //   check_only("RobinHash", benchmark.template Run<RobinHash<uint32_t>>());
+  //   check_only("BS", benchmark.template Run<BinarySearch<uint32_t>>());
+  // }
 }
 
 template<class Benchmark>
@@ -66,29 +70,31 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
                     bool only_mode, std::string only,
                     std::string filename) {
   // Build and probe individual indexes.
-  check_only("RMI", benchmark_64_rmi(benchmark, pareto, filename));
-  check_only("RS", benchmark_64_rs(benchmark, pareto));
+  // check_only("RMI", benchmark_64_rmi(benchmark, pareto, filename));
+  // check_only("RS", benchmark_64_rs(benchmark, pareto));
   check_only("PGM", benchmark_64_pgm(benchmark, pareto));
-  check_only("ART", benchmark_64_art(benchmark, pareto));
-  check_only("BTree", benchmark_64_btree(benchmark, pareto));
-  check_only("IBTree", benchmark_64_ibtree(benchmark, pareto));
-  check_only("FAST", benchmark_64_fast(benchmark, pareto));
-  check_only("ALEX", benchmark_64_alex(benchmark, pareto));
-  check_only("FITing", benchmark_64_fitingtree(benchmark, pareto));
-  check_only("BufferedFITing", benchmark_64_bufferedfitingtree(benchmark, pareto));
-  check_only("DPGM", benchmark_64_dpgm(benchmark, pareto));
-#ifndef __APPLE__
-  #ifndef DISABLE_FST
-  check_only("FST", benchmark_64_fst(benchmark, pareto));
-  #endif
-  check_only("Wormhole", benchmark_64_wormhole(benchmark, pareto));
-#endif
+  // check_only("PGMMod", benchmark_64_pgmmod(benchmark, pareto));
+  check_only("PGMCache", benchmark_64_pgmcache(benchmark, pareto));
+  // check_only("ART", benchmark_64_art(benchmark, pareto));
+  // check_only("BTree", benchmark_64_btree(benchmark, pareto));
+  // check_only("IBTree", benchmark_64_ibtree(benchmark, pareto));
+  // check_only("FAST", benchmark_64_fast(benchmark, pareto));
+  // check_only("ALEX", benchmark_64_alex(benchmark, pareto));
+  // check_only("FITing", benchmark_64_fitingtree(benchmark, pareto));
+  // check_only("BufferedFITing", benchmark_64_bufferedfitingtree(benchmark, pareto));
+  // check_only("DPGM", benchmark_64_dpgm(benchmark, pareto));
+// #ifndef __APPLE__
+//   #ifndef DISABLE_FST
+//   check_only("FST", benchmark_64_fst(benchmark, pareto));
+//   #endif
+//   check_only("Wormhole", benchmark_64_wormhole(benchmark, pareto));
+// #endif
 
-  if (benchmark.uses_binary_search()) {
-    check_only("RBS", benchmark_64_rbs(benchmark, pareto));
-    check_only("RobinHash", benchmark.template Run<RobinHash<uint64_t>>());
-    check_only("BS", benchmark.template Run<BinarySearch<uint64_t>>());
-  }
+//   if (benchmark.uses_binary_search()) {
+//     check_only("RBS", benchmark_64_rbs(benchmark, pareto));
+//     check_only("RobinHash", benchmark.template Run<RobinHash<uint64_t>>());
+//     check_only("BS", benchmark.template Run<BinarySearch<uint64_t>>());
+//   }
 }
 
 int main(int argc, char* argv[]) {

@@ -213,7 +213,6 @@ private:
           // Compute the actual index for debugging.
           const volatile uint64_t lookup_key = lookups_[idx].key;
           const volatile uint64_t expected = lookups_[idx].result;
-          
           SearchBound bound;
 
           if (track_errors) {
@@ -262,8 +261,13 @@ private:
                 return;
               }
             }  
+
+
           }
           if (fence) __sync_synchronize();
+
+          // Write position to cache
+          index.WriteCache(expected);
         }
       }
     };

@@ -8,9 +8,9 @@ void benchmark_32_bufferedfitingtree(sosd::Benchmark<uint32_t, Searcher> &benchm
   benchmark.template Run<BufferedFITingTree<uint32_t, 128, 96>>();
   benchmark.template Run<BufferedFITingTree<uint32_t, 64, 32>>();
   if (pareto) {
-    benchmark.template Run<BufferedFITingTree<uint32_t, 16, 8>>();
-    benchmark.template Run<BufferedFITingTree<uint32_t, 20, 10>>();
-    benchmark.template Run<BufferedFITingTree<uint32_t, 32, 16>>();
+    // benchmark.template Run<BufferedFITingTree<uint32_t, 16, 8>>();
+    // benchmark.template Run<BufferedFITingTree<uint32_t, 20, 10>>();
+    // benchmark.template Run<BufferedFITingTree<uint32_t, 32, 16>>();
     benchmark.template Run<BufferedFITingTree<uint32_t, 50, 40>>();
     benchmark.template Run<BufferedFITingTree<uint32_t, 100, 50>>();
     benchmark.template Run<BufferedFITingTree<uint32_t, 150, 140>>();
@@ -22,9 +22,9 @@ void benchmark_64_bufferedfitingtree(sosd::Benchmark<uint64_t, Searcher> &benchm
   benchmark.template Run<BufferedFITingTree<uint64_t, 128, 96>>();
   benchmark.template Run<BufferedFITingTree<uint64_t, 64, 32>>();
   if (pareto) {
-    benchmark.template Run<BufferedFITingTree<uint64_t, 16, 8>>();
-    benchmark.template Run<BufferedFITingTree<uint64_t, 20, 10>>();
-    benchmark.template Run<BufferedFITingTree<uint64_t, 32, 16>>();
+    // benchmark.template Run<BufferedFITingTree<uint64_t, 16, 8>>();
+    // benchmark.template Run<BufferedFITingTree<uint64_t, 20, 10>>();
+    // benchmark.template Run<BufferedFITingTree<uint64_t, 32, 16>>();
     benchmark.template Run<BufferedFITingTree<uint64_t, 50, 40>>();
     benchmark.template Run<BufferedFITingTree<uint64_t, 100, 50>>();
     benchmark.template Run<BufferedFITingTree<uint64_t, 150, 140>>();

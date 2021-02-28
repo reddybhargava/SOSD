@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <queue>
 
 using namespace std;
 
@@ -22,13 +23,20 @@ template<class KeyType, class T>
 vector<EqualityLookup<KeyType>> generate_equality_lookups(const vector<Row<KeyType>>& data,
                                                           const vector<T>& unique_keys,
                                                           const size_t num_lookups,
-                                                          const double negative_lookup_ratio) {
+                                                          const double negative_lookup_ratio,
+                                                          const uint64_t num_repetitions=0,
+                                                          uint64_t min_num_repetititons_key=0,
+                                                          uint64_t max_num_repetititons_key=100) {
   vector<EqualityLookup<KeyType>> lookups;
-  lookups.reserve(num_lookups);
+  lookups.reserve(num_lookups+num_repetitions);
   util::FastRandom ranny(42);
   size_t num_generated = 0;
   size_t num_retries = 0;
   BranchingBinarySearch<KeyType> bbs;
+  queue<pair<EqualityLookup<KeyType>, uint64_t>> repetitions; // Queue used to store the keys to repeat - pair{key, num_repetitions_of_that_key}
+  uint64_t num_repetitions_left = num_repetitions;
+
+  // std::cout << num_repetitions_left << " " << num_repetitions << " " << min_num_repetititons_key << " " << max_num_repetititons_key << std::endl;
 
   // Required to generate negative lookups within data domain.
   const KeyType min_key = data.front().key;
@@ -70,10 +78,51 @@ vector<EqualityLookup<KeyType>> generate_equality_lookups(const vector<Row<KeyTy
       // Try a different lookup key.
       continue;
     }
-    lookups.push_back({lookup_key, result});
+    const EqualityLookup<KeyType> lookup_entry = {lookup_key, result};
+    lookups.push_back(lookup_entry);
+
+    if (num_repetitions_left > 0) {
+      // std::cout << "left: " << num_repetitions_left << " " << num_repetitions << " " << min_num_repetititons_key << " " << max_num_repetititons_key << std::endl;
+
+      const uint64_t num_repetitions_key = ranny.RandUint32(min_num_repetititons_key, max_num_repetititons_key);
+      if (num_repetitions_key > 0) {
+        repetitions.push(make_pair(lookup_entry, num_repetitions_key));
+      }
+
+      if (!repetitions.empty()) {
+        pair<EqualityLookup<KeyType>, uint64_t> repetition_entry = repetitions.front();
+        repetitions.pop();
+        if(repetition_entry.second > 1){
+          repetition_entry.second--;
+          repetitions.push(repetition_entry);
+        }
+        lookups.push_back(repetition_entry.first);
+      }
+
+      num_repetitions_left -= num_repetitions_key;
+      // To make sure sum(num_repetitions_key) doesn't exceed the num_repetitions 
+      if (num_repetitions_left < max_num_repetititons_key) { 
+        max_num_repetititons_key = num_repetitions_left;
+      }
+      if (max_num_repetititons_key < min_num_repetititons_key) {
+        min_num_repetititons_key = 0;
+      }
+    }
+
     ++num_generated;
     num_retries = 0;
   }
+  // Push the remaining keys from the repetitions queue to lookups vector
+  while (!repetitions.empty()) {
+    pair<EqualityLookup<KeyType>, uint64_t> repetition_entry = repetitions.front();
+    repetitions.pop();
+    if(repetition_entry.second > 1){
+      repetition_entry.second--;
+      repetitions.push(repetition_entry);
+    }
+    lookups.push_back(repetition_entry.first);
+  }
+
   return lookups;
 }
 
@@ -134,6 +183,13 @@ int main(int argc, char* argv[]) {
   if (negative_lookup_ratio < 0 || negative_lookup_ratio > 1) {
     util::fail("negative lookup ratio must be between 0 and 1.");
   }
+  uint64_t num_repetitions = 0, min_num_repetititons_key = 0, max_num_repetititons_key = 0;
+  if(argc >= 5)
+    num_repetitions = stoull(argv[4]);
+  if(argc >= 7)
+    min_num_repetititons_key = stoull(argv[5]), max_num_repetititons_key = stoull(argv[6]);
+
+  // std::cout << num_repetitions << " " << min_num_repetititons_key << " " << max_num_repetititons_key << std::endl;
 
   switch (type) {
     case DataType::UINT32: {
@@ -169,7 +225,10 @@ int main(int argc, char* argv[]) {
             generate_equality_lookups(data,
                                       unique_keys,
                                       num_lookups,
-                                      negative_lookup_ratio);
+                                      negative_lookup_ratio, 
+                                      num_repetitions,
+                                      min_num_repetititons_key,
+                                      max_num_repetititons_key);
       }
 
       print_equality_lookup_stats(equality_lookups);
@@ -177,6 +236,10 @@ int main(int argc, char* argv[]) {
         util::write_data(equality_lookups,
                         filename + "_inserts_"
                             + to_nice_number(num_lookups));
+      } else if (num_repetitions > 0) {
+          util::write_data(equality_lookups,
+                        filename + "_equality_lookups_repetitions_"
+                            + to_nice_number(num_lookups+num_repetitions));
       } else {
         util::write_data(equality_lookups,
                         filename + "_equality_lookups_"
@@ -218,7 +281,10 @@ int main(int argc, char* argv[]) {
             generate_equality_lookups(data,
                                       unique_keys,
                                       num_lookups,
-                                      negative_lookup_ratio);
+                                      negative_lookup_ratio, 
+                                      num_repetitions,
+                                      min_num_repetititons_key,
+                                      max_num_repetititons_key);
       }
 
       print_equality_lookup_stats(equality_lookups);
@@ -226,6 +292,11 @@ int main(int argc, char* argv[]) {
         util::write_data(equality_lookups,
                         filename + "_inserts_"
                             + to_nice_number(num_lookups));
+      } else if (num_repetitions > 0) {
+          std::cout << equality_lookups.size() << std::endl;
+          util::write_data(equality_lookups,
+                        filename + "_equality_lookups_repetitions_"
+                            + to_nice_number(num_lookups+num_repetitions));
       } else {
         util::write_data(equality_lookups,
                         filename + "_equality_lookups_"

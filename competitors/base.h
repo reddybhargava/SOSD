@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../util.h"
+#define ValueType uint64_t
 
 class Competitor {
  public:
@@ -19,5 +20,9 @@ class Competitor {
   template<typename KeyType>
   uint64_t Insert(const std::vector<KeyValue<KeyType>> &data) {
     return 0;
+  }
+
+  void WriteCache(ValueType position) {
+    return ;
   }
 };
