@@ -21,8 +21,8 @@ function do_benchmark() {
 
 mkdir -p ./results
 
-#do_benchmark osm_cellids_200M_uint64
-#do_benchmark books_200M_uint64
+do_benchmark osm_cellids_200M_uint64
+do_benchmark books_200M_uint64
 
 do_benchmark fb_200M_uint64
 do_benchmark wiki_ts_200M_uint64

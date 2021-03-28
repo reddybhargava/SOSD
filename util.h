@@ -9,6 +9,7 @@
 #include <vector>
 #include <cassert>
 #include <unordered_map>
+#include <math.h>
 
 #define ROW_WIDTH 1
 

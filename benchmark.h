@@ -194,7 +194,7 @@ private:
     bool run_failed = false;
     
 
-    std::vector<uint64_t> memory(26e6 / 8); // NOTE: L3 size of the machine
+    std::vector<uint64_t> memory(9e6 / 8); // NOTE: L3 size of the machine
     if (clear_cache) {
       util::FastRandom ranny(8128);
       for(uint64_t& iter : memory) {
@@ -239,11 +239,11 @@ private:
                 data_, lookup_key,
                 &qualifying,
                 bound.start, bound.stop);
+              const auto end = std::chrono::high_resolution_clock::now();
               if (!CheckResults(actual, expected, lookup_key, bound)) {
                 run_failed = true;
                 return;
               }
-              const auto end = std::chrono::high_resolution_clock::now();
             
               const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
                 end - start).count();
@@ -267,7 +267,7 @@ private:
           if (fence) __sync_synchronize();
 
           // Write position to cache
-          index.WriteCache(expected);
+          index.template WriteCache<KeyType>(lookup_key, expected);
         }
       }
     };
