@@ -10,12 +10,12 @@ fi
 
 function do_benchmark() {
 
-    RESULTS=./results/$1_cold_zipf_results_random_$2_$3.txt
+    RESULTS=./results/$1_cold_zipf_results_random_$2_$3_gg.txt
     if [ -f $RESULTS ]; then
         echo "Already have results for $1 ($2, $3)"
     else
         echo "Executing workload $1 ($2, $3)"
-        $BENCHMARK -r 1 ./data/$1 ./data/$1_equality_lookups_zipf_$2_$3  --cold-cache --pareto | tee ./results/$1_cold_zipf_results_random_$2_$3.txt
+        $BENCHMARK -r 1 ./data/$1 ./data/$1_equality_lookups_zipf_$2_$3  --cold-cache | tee ./results/$1_cold_zipf_results_lru_random_$2_$3.txt
     fi
 }
 

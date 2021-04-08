@@ -15,7 +15,9 @@
 #include "benchmarks/benchmark_fitingtree.h"
 #include "benchmarks/benchmark_fitingtreebuffered.h"
 #include "benchmarks/benchmark_pgmdynamic.h"
-#include "benchmarks/benchmark_pgmcache.h"
+// #include "benchmarks/benchmark_pgmcache.h"
+#include "benchmarks/benchmark_pgmcachel.h"
+#include "benchmarks/benchmark_pgmcacher.h"
 #include "util.h"
 #include "utils/cxxopts.hpp"
 #include "config.h"
@@ -42,7 +44,9 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
   //  check_only("RS", benchmark_32_rs(benchmark, pareto));
    check_only("PGM", benchmark_32_pgm(benchmark, pareto));
   //  check_only("PGMMod", benchmark_32_pgmmod(benchmark, pareto));
-   check_only("PGMCache", benchmark_32_pgmcache(benchmark, pareto));
+  //  check_only("PGMCache", benchmark_32_pgmcache(benchmark, pareto));
+   check_only("PGMCacheL", benchmark_32_pgmcache_l(benchmark, pareto));
+   check_only("PGMCacheR", benchmark_32_pgmcache_r(benchmark, pareto));
   //  check_only("BTree", benchmark_32_btree(benchmark, pareto));
   // check_only("IBTree", benchmark_32_ibtree(benchmark, pareto));
   // check_only("FAST", benchmark_32_fast(benchmark, pareto));
@@ -74,7 +78,9 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
   // check_only("RS", benchmark_64_rs(benchmark, pareto));
   check_only("PGM", benchmark_64_pgm(benchmark, pareto));
   // check_only("PGMMod", benchmark_64_pgmmod(benchmark, pareto));
-  check_only("PGMCache", benchmark_64_pgmcache(benchmark, pareto));
+  // check_only("PGMCache", benchmark_64_pgmcache(benchmark, pareto));
+  check_only("PGMCacheL", benchmark_64_pgmcache_l(benchmark, pareto));
+  check_only("PGMCacheR", benchmark_64_pgmcache_r(benchmark, pareto));
   // check_only("ART", benchmark_64_art(benchmark, pareto));
   // check_only("BTree", benchmark_64_btree(benchmark, pareto));
   // check_only("IBTree", benchmark_64_ibtree(benchmark, pareto));
