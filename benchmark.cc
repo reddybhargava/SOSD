@@ -11,18 +11,20 @@
 #include "benchmarks/benchmark_fast64.h"
 #include "benchmarks/benchmark_fst.h"
 #include "benchmarks/benchmark_wormhole.h"
-#include "benchmarks/benchmark_alex.h"
+// #include "benchmarks/benchmark_alex.h"
 #include "benchmarks/benchmark_fitingtree.h"
 #include "benchmarks/benchmark_fitingtreebuffered.h"
 #include "benchmarks/benchmark_pgmdynamic.h"
-#include "benchmarks/benchmark_pgmcache.h"
+// #include "benchmarks/benchmark_pgmcache.h"
+#include "benchmarks/benchmark_pgmcachel.h"
+#include "benchmarks/benchmark_pgmcacher.h"
 #include "util.h"
 #include "utils/cxxopts.hpp"
 #include "config.h"
 
 #include "competitors/binary_search.h"
-#include "competitors/hash.h"
-#include "competitors/stanford_hash.h"
+// #include "competitors/hash.h"
+// #include "competitors/stanford_hash.h"
 
 #include "searches/branching_binary_search.h"
 #include "searches/branchless_binary_search.h"
@@ -38,16 +40,18 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
                     bool only_mode, std::string only,
                     std::string filename) {
   // Build and probe individual indexes.
-  // check_only("RMI", benchmark_32_rmi(benchmark, pareto, filename));
-  // check_only("RS", benchmark_32_rs(benchmark, pareto));
-  check_only("PGM", benchmark_32_pgm(benchmark, pareto));
-  // check_only("PGMMod", benchmark_32_pgmmod(benchmark, pareto));
-  check_only("PGMCache", benchmark_32_pgmcache(benchmark, pareto));
-  // check_only("BTree", benchmark_32_btree(benchmark, pareto));
+  //  check_only("RMI", benchmark_32_rmi(benchmark, pareto, filename));
+  //  check_only("RS", benchmark_32_rs(benchmark, pareto));
+   check_only("PGM", benchmark_32_pgm(benchmark, pareto));
+  //  check_only("PGMMod", benchmark_32_pgmmod(benchmark, pareto));
+  //  check_only("PGMCache", benchmark_32_pgmcache(benchmark, pareto));
+   check_only("PGMCacheL", benchmark_32_pgmcache_l(benchmark, pareto));
+   check_only("PGMCacheR", benchmark_32_pgmcache_r(benchmark, pareto));
+  //  check_only("BTree", benchmark_32_btree(benchmark, pareto));
   // check_only("IBTree", benchmark_32_ibtree(benchmark, pareto));
   // check_only("FAST", benchmark_32_fast(benchmark, pareto));
   // check_only("ALEX", benchmark_32_alex(benchmark, pareto));
-  // check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
+  //  check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
   // check_only("BufferedFITing", benchmark_32_bufferedfitingtree(benchmark, pareto));
   // check_only("DPGM", benchmark_32_dpgm(benchmark, pareto));
 // #ifndef __APPLE__
@@ -74,7 +78,9 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
   // check_only("RS", benchmark_64_rs(benchmark, pareto));
   check_only("PGM", benchmark_64_pgm(benchmark, pareto));
   // check_only("PGMMod", benchmark_64_pgmmod(benchmark, pareto));
-  check_only("PGMCache", benchmark_64_pgmcache(benchmark, pareto));
+  // check_only("PGMCache", benchmark_64_pgmcache(benchmark, pareto));
+  check_only("PGMCacheL", benchmark_64_pgmcache_l(benchmark, pareto));
+  check_only("PGMCacheR", benchmark_64_pgmcache_r(benchmark, pareto));
   // check_only("ART", benchmark_64_art(benchmark, pareto));
   // check_only("BTree", benchmark_64_btree(benchmark, pareto));
   // check_only("IBTree", benchmark_64_ibtree(benchmark, pareto));

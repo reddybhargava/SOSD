@@ -22,7 +22,8 @@ class Competitor {
     return 0;
   }
 
-  void WriteCache(ValueType position) {
+  template<typename KeyType>
+  void WriteCache(const KeyType key, const ValueType position) {
     return ;
   }
 };

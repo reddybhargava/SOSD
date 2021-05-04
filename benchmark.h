@@ -194,7 +194,7 @@ private:
     bool run_failed = false;
     
 
-    std::vector<uint64_t> memory(26e6 / 8); // NOTE: L3 size of the machine
+    std::vector<uint64_t> memory(9e6 / 8); // NOTE: L3 size of the machine
     if (clear_cache) {
       util::FastRandom ranny(8128);
       for(uint64_t& iter : memory) {
@@ -235,19 +235,33 @@ private:
 
               const auto start = std::chrono::high_resolution_clock::now();
               bound = index.EqualityLookup(lookup_key);
-              actual = searcher.search(
-                data_, lookup_key,
-                &qualifying,
-                bound.start, bound.stop);
+              const auto end_model = std::chrono::high_resolution_clock::now();
+              
+              if(bound.start == bound.stop) {
+                actual = *data_[bound.start].data;
+              } else {
+                counter_bs++;
+                const auto start_bs = std::chrono::high_resolution_clock::now();
+                actual = searcher.search(data_, lookup_key, &qualifying, bound.start, bound.stop);
+                const auto end_bs = std::chrono::high_resolution_clock::now();
+
+                const auto timing_bs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                end_bs - start_bs).count();
+                individual_ns_sum_bs += timing_bs;
+              }
+              const auto end = std::chrono::high_resolution_clock::now();
               if (!CheckResults(actual, expected, lookup_key, bound)) {
                 run_failed = true;
                 return;
               }
-              const auto end = std::chrono::high_resolution_clock::now();
             
               const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
                 end - start).count();
               individual_ns_sum += timing;
+              
+              const auto timing_model = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                end_model - start).count();
+              individual_ns_sum_model += timing_model;
               
             } else {
               // not tracking errors, measure the lookup time.
@@ -267,7 +281,7 @@ private:
           if (fence) __sync_synchronize();
 
           // Write position to cache
-          index.WriteCache(expected);
+          index.template WriteCache<KeyType>(lookup_key, expected);
         }
       }
     };
@@ -278,7 +292,8 @@ private:
     runs_.resize(repeats);
     for (unsigned int i = 0; i < repeats; ++i) {
       random_sum = 0;
-      individual_ns_sum = 0;
+      individual_ns_sum_bs = individual_ns_sum_model = individual_ns_sum = 0;
+      counter_bs = 0;
 
       // Reset atomic counter.
       cntr.store(0);
@@ -320,12 +335,19 @@ private:
     
     
     if (cold_cache) {
-      double ns_per = ((double)individual_ns_sum) / ((double)lookups_.size());
+      double ns_per       = ((double)individual_ns_sum) / ((double)lookups_.size());
+      double ns_per_model = ((double)individual_ns_sum_model)/ ((double)lookups_.size());
+      double ns_per_bs    = ((double)individual_ns_sum_bs)/ ((double)counter_bs);
       std::cout << "RESULT: " << index.name()
                 << "," << index.variant()
                 << "," << ns_per
                 << "," << index.size() << "," << build_ns_
                 << "," << searcher.name()
+                << "," << ns_per_model
+                << "," << ns_per_bs
+                << "," << individual_ns_sum_model
+                << "," << individual_ns_sum_bs
+                << "," << individual_ns_sum_model + individual_ns_sum_bs
                 << std::endl;
       return;
     }
@@ -347,18 +369,24 @@ private:
     
     // don't print a line if (the first) run failed
     if (runs_[0]!=0) {
+      double ns_per_model = ((double)individual_ns_sum_model) / ((double)lookups_.size());
+      double ns_per_bs    = ((double)individual_ns_sum_bs) / ((double)lookups_.size());
+      
       std::cout << "RESULT: " << index.name()
                 << "," << index.variant()
                 << all_times.str() // has a leading comma
                 << "," << index.size() << "," << build_ns_
                 << "," << searcher.name()
+                << "," << ns_per_model
+                << "," << ns_per_bs
                 << std::endl;
     }
   }
 
   uint64_t random_sum = 0;
-  uint64_t individual_ns_sum = 0;
+  uint64_t individual_ns_sum = 0, individual_ns_sum_bs = 0, individual_ns_sum_model = 0;
   uint64_t individual_ns_sum_inserts = 0;
+  uint64_t counter_bs = 0;
   const std::string data_filename_;
   const std::string lookups_filename_;
   const std::string inserts_filename_;
