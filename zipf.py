@@ -22,7 +22,7 @@ datasets = [
 def generateLookups(alpha, numLookups, lookups_size):
        
     for dataset in datasets:
-        lookupsFilename = f"data/{dataset}_equality_lookups_zipf_{lookups_size}_{int(alpha)}_python"
+        lookupsFilename = f"data/zipf/{dataset}_equality_lookups_zipf_{lookups_size}_{int(alpha)}_python"
         if not os.path.isfile(lookupsFilename):
             z = np.random.zipf(alpha, numLookups)
             print(f"{dataset} -> alpha:{alpha}, numLookups:{numLookups}, min:{min(z)}, max:{max(z)}, unique:{len(np.unique(z))}")

@@ -1,0 +1,15 @@
+Repeating lookup code 1 time(s).
+Using 1 thread(s).
+read 200000000 values from ./data/wiki_ts_200M_uint64 in 766 ms (261.097 M values/s)
+data contains duplicates
+read 1100000 values from ./data/wiki_ts_200M_uint64_equality_lookups_repetitions_1100K in 191 ms (5.75916 M values/s)
+RESULT: PGM,16,297.838,4604520,5123419570,BinarySearch,0,0
+RESULT: PGM,4,332.942,45559200,6420684541,BinarySearch,0,0
+RESULT: PGM,8,313.302,14269300,5656953852,BinarySearch,0,0
+RESULT: PGM,32,314.008,1721860,4812903840,BinarySearch,0,0
+RESULT: PGM,64,345.333,754740,4729555184,BinarySearch,0,0
+RESULT: PGM,256,411.864,222580,4841188767,BinarySearch,0,0
+RESULT: PGM,1024,484.846,89600,5275641919,BinarySearch,0,0
+RESULT: PGM,2048,535.269,54380,5380291788,BinarySearch,0,0
+RESULT: PGM,4096,592.646,38680,5719349560,BinarySearch,0,0
+RESULT: PGM,8192,663.046,19940,5331350820,BinarySearch,0,0

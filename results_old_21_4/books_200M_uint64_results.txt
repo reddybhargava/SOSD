@@ -1,0 +1,9 @@
+Repeating lookup code 1 time(s).
+Using 1 thread(s).
+read 200000000 values from ./data/books_200M_uint64 in 775 ms (258.065 M values/s)
+data is unique
+read 1000000 values from ./data/books_200M_uint64_equality_lookups_1M in 184 ms (5.43478 M values/s)
+RESULT: PGM,16,338.07,15418020,8543511762,BinarySearch
+RESULT: PGM,4,370.447,142554100,12208994386,BinarySearch
+RESULT: PGM,8,349.487,45175800,9801468414,BinarySearch
+RESULT: PGM,32,346.299,5268320,7671565826,BinarySearch

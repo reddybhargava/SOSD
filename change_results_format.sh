@@ -6,7 +6,7 @@ mkdir -p results_csv/inserts/results/
 
 function perf() {
 	for filename in results/*perf*.txt; do
-		awk  -F , '{gsub(/RESULT:/,"")}1 && NF == 13' $filename > results_csv/perf/$filename
+		awk  -F , '{gsub(/RESULT:[ ]*/,"")}1 && (NF == 20 || NF == 22)' $filename > results_csv/perf/$filename
 	done
 }
 
