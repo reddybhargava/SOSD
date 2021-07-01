@@ -6,7 +6,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if (${LINUX})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -Wall -Wfatal-errors -march=native -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -ffast-math -Wall -Wfatal-errors -march=native -fopenmp")
 else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -Wall -Wfatal-errors -march=native")
 endif ()

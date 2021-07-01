@@ -8,10 +8,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <algorithm>
-#include "pgm_index_rand_cache.hpp"
+#include "pgm_index_cache_random.hpp"
 //#include <functional>
 //#include <boost/iterator/transform_iterator.hpp>
 //#include <boost/range/adaptors.hpp>
+// #include <valgrind/callgrind.h>
 
 #define ValueType uint64_t
 
@@ -48,7 +49,12 @@ public:
 
   SearchBound EqualityLookup(const KeyType lookup_key)
   {
+    // CALLGRIND_START_INSTRUMENTATION;
+    // CALLGRIND_TOGGLE_COLLECT;
     auto approx_range = pgm_.find_approximate_position(lookup_key);
+    // CALLGRIND_TOGGLE_COLLECT;
+    // CALLGRIND_STOP_INSTRUMENTATION;
+
     auto lo = approx_range.lo;
     auto hi = approx_range.hi;
 

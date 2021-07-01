@@ -8,21 +8,22 @@
 #include <cstdlib>
 #include <iostream>
 #include <algorithm>
-#include "pgm_index_rand_cache.hpp" 
+#include "pgm_index_cache_random.hpp"
 //#include <functional>
 //#include <boost/iterator/transform_iterator.hpp>
 //#include <boost/range/adaptors.hpp>
 
 #define ValueType uint64_t
 
-template<class KeyType, int pgm_error>
-class PGMCache : public Competitor {
+template <class KeyType, int pgm_error>
+class PGMCache : public Competitor
+{
 
 public:
-  uint64_t Build(const std::vector<KeyValue<KeyType>>& data) {
-    
-    const auto extract_key
-      = [](KeyValue<KeyType> kv) { return kv.key; };
+  uint64_t Build(const std::vector<KeyValue<KeyType>> &data)
+  {
+
+    const auto extract_key = [](KeyValue<KeyType> kv) { return kv.key; };
 
     // This code uses a boost transform iterator to avoid a copy. It
     // seems to be much slower, however.
@@ -45,29 +46,33 @@ public:
     return build_time;
   }
 
-  SearchBound EqualityLookup(const KeyType lookup_key) {
+  SearchBound EqualityLookup(const KeyType lookup_key)
+  {
     auto approx_range = pgm_.find_approximate_position(lookup_key);
     auto lo = approx_range.lo;
     auto hi = approx_range.hi;
 
-    return (SearchBound){ lo, hi + 1 };
-
+    return (SearchBound){lo, hi + 1};
   }
 
-  template<typename KT>
-  void WriteCache(const KT key, const ValueType position) {
+  template <typename KT>
+  void WriteCache(const KT key, const ValueType position)
+  {
     pgm_.add_cache_pos(key, position);
   }
 
-  std::string name() const {
+  std::string name() const
+  {
     return "PGMCache (" + std::to_string(pgm_.cacheHits) + ", " + std::to_string(pgm_.cacheTime) + ", " + std::to_string(pgm_.count) + ")";
   }
 
-  std::size_t size() const {
+  std::size_t size() const
+  {
     return pgm_.size_in_bytes();
   }
 
-  bool applicable(bool unique, const std::string& data_filename) const {
+  bool applicable(bool unique, const std::string &data_filename) const
+  {
     return true;
   }
 

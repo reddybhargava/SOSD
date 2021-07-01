@@ -22,11 +22,13 @@ We provide a number of scripts to automate things. Each is located in the `scrip
 
 ## Running the benchmark
 
+* `scripts/setup_anywhere.sh` downloads the required tools and packages to run the benchmark
 * `scripts/download.sh` downloads and stores required data from the Internet
 * `scripts/build_rmis.sh` compiles and builds the RMIs for each dataset
   * `scripts/download_rmis.sh` will download pre-built RMIs instead, which may be faster. You'll need to run `build_rmis.sh` if you want to measure build times on your platform.
-* `scripts/prepare.sh` constructs query workloads and compiles the benchmark
-* `scripts/execute.sh` executes the benchmark on each workload, storing the results in `results`
+* `scripts/prepare.sh` constructs query workloads and compiles the benchmark 
+* `scripts/execute_lookups_zipf.sh [cold|perf]` executes the benchmark on each zipfian workload, storing the results in `results`
+* `scripts/execute_lookups_repetitions.sh [cold|perf]` executes the benchmark on each repetitions workload, storing the results in `results`
 
 Build times can be long, as we make aggressive use of templates to ensure we do not accidentally measure vtable lookup time. For development, this can be annoying: you can set `USE_FAST_MODE` in `config.h` to disable some features and get a faster build time.
 

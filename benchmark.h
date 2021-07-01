@@ -15,9 +15,11 @@
 #ifdef __linux__
 #define checkLinux(x) (x)
 #else
-#define checkLinux(x) { util::fail("Only supported on Linux."); }
+#define checkLinux(x)                       \
+  {                                         \
+    util::fail("Only supported on Linux."); \
+  }
 #endif
-
 
 // Get the CPU affinity for the process.
 static const auto cpu_mask = dtl::this_thread::get_cpu_affinity();
@@ -25,397 +27,442 @@ static const auto cpu_mask = dtl::this_thread::get_cpu_affinity();
 // Batch size in number of lookups.
 static constexpr std::size_t batch_size = 1u << 16;
 
-namespace sosd {
+namespace sosd
+{
 
-// KeyType: Controls the type of the key (the value will always be uint64_t)
-//          Use uint64_t for 64 bit types and uint32_t for 32 bit types
-//          KeyType must implement operator<
-template<typename KeyType = uint64_t,
-         template<typename> typename SearchClass = BranchingBinarySearch>
-class Benchmark {
- public:
-  Benchmark(const std::string& data_filename,
-            const std::string& lookups_filename,
-            const std::string& inserts_filename,
-            const size_t num_repeats,
-            const bool perf, const bool build, const bool fence,
-            const bool cold_cache, const bool track_errors,
-            const size_t num_threads,
-            const SearchClass<KeyType> searcher)
-      : data_filename_(data_filename),
-        lookups_filename_(lookups_filename),
-        inserts_filename_(inserts_filename),
-        num_repeats_(num_repeats),
-        first_run_(true), perf(perf), build(build), fence(fence),
-        cold_cache(cold_cache), track_errors(track_errors),
-        num_threads_(num_threads),
-        searcher(searcher) {
-    
-    if ((int)cold_cache + (int)perf + (int)fence > 1) {
-      util::fail("Can only specify one of cold cache, perf counters, or fence.");
-    }
-    
-    // Load data.
-    std::vector<KeyType> keys = util::load_data<KeyType>(data_filename_);
+  // KeyType: Controls the type of the key (the value will always be uint64_t)
+  //          Use uint64_t for 64 bit types and uint32_t for 32 bit types
+  //          KeyType must implement operator<
+  template <typename KeyType = uint64_t,
+            template <typename> typename SearchClass = BranchingBinarySearch>
+  class Benchmark
+  {
+  public:
+    Benchmark(const std::string &data_filename,
+              const std::string &lookups_filename,
+              const std::string &inserts_filename,
+              const size_t num_repeats,
+              const bool perf, const bool build, const bool fence,
+              const bool cold_cache, const bool track_errors,
+              const size_t num_threads,
+              const SearchClass<KeyType> searcher)
+        : data_filename_(data_filename),
+          lookups_filename_(lookups_filename),
+          inserts_filename_(inserts_filename),
+          num_repeats_(num_repeats),
+          first_run_(true), perf(perf), build(build), fence(fence),
+          cold_cache(cold_cache), track_errors(track_errors),
+          num_threads_(num_threads),
+          searcher(searcher)
+    {
 
-    log_sum_search_bound_ = 0.0;
-    l1_sum_search_bound_ = 0.0;
-    l2_sum_search_bound_ = 0.0;
-    if (!is_sorted(keys.begin(), keys.end()))
-      util::fail("keys have to be sorted");
-    // Check whether keys are unique.
-    unique_keys_ = util::is_unique(keys);
-    if (unique_keys_)
-      std::cout << "data is unique" << std::endl;
-    else
-      std::cout << "data contains duplicates" << std::endl;
-    // Add artificial values to keys.
-    data_ = util::add_values(keys);
+      if ((int)cold_cache + (int)perf + (int)fence > 1)
+      {
+        util::fail("Can only specify one of cold cache, perf counters, or fence.");
+      }
 
-    // Load lookups.
-    lookups_ = util::load_data<EqualityLookup<KeyType>>(lookups_filename_);
+      // Load data.
+      std::vector<KeyType> keys = util::load_data<KeyType>(data_filename_);
 
-    // Create the data for the index (key -> position).
-    for (uint64_t pos = 0; pos < data_.size(); pos++) {
-      index_data_.push_back((KeyValue<KeyType>) {data_[pos].key, pos});
-    }
+      log_sum_search_bound_ = 0.0;
+      l1_sum_search_bound_ = 0.0;
+      l2_sum_search_bound_ = 0.0;
+      if (!is_sorted(keys.begin(), keys.end()))
+        util::fail("keys have to be sorted");
+      // Check whether keys are unique.
+      unique_keys_ = util::is_unique(keys);
+      if (unique_keys_)
+        std::cout << "data is unique" << std::endl;
+      else
+        std::cout << "data contains duplicates" << std::endl;
+      // Add artificial values to keys.
+      data_ = util::add_values(keys);
 
+      // Load lookups.
+      lookups_ = util::load_data<EqualityLookup<KeyType>>(lookups_filename_);
 
-    if (inserts_filename_ != "") {
-      perform_insertion = true;
+      // Create the data for the index (key -> position).
+      for (uint64_t pos = 0; pos < data_.size(); pos++)
+      {
+        index_data_.push_back((KeyValue<KeyType>){data_[pos].key, pos});
+      }
 
-      // Load insert data
-      std::vector<KeyType> insert_keys = util::load_data<KeyType>(inserts_filename_);
+      if (inserts_filename_ != "")
+      {
+        perform_insertion = true;
 
-      uint64_t bulk_load_size = data_.size();
-      for (uint64_t pos = 0; pos < insert_keys.size(); pos++) {
-        index_insert_data_.push_back((KeyValue<KeyType>) {insert_keys[pos], bulk_load_size + pos});
+        // Load insert data
+        std::vector<KeyType> insert_keys = util::load_data<KeyType>(inserts_filename_);
+
+        uint64_t bulk_load_size = data_.size();
+        for (uint64_t pos = 0; pos < insert_keys.size(); pos++)
+        {
+          index_insert_data_.push_back((KeyValue<KeyType>){insert_keys[pos], bulk_load_size + pos});
+        }
       }
     }
-  
-  }
 
-  template<class Index>
-  void Run() {
-    // Build index.
-    Index index;
+    template <class Index>
+    void Run()
+    {
+      // Build index.
+      Index index;
 
-    if (!index.applicable(unique_keys_, data_filename_)) {
-      std::cout << "index " << index.name() << " is not applicable"
-                << std::endl;
-      return;
-    }
+      if (!index.applicable(unique_keys_, data_filename_))
+      {
+        std::cout << "index " << index.name() << " is not applicable"
+                  << std::endl;
+        return;
+      }
 
-    build_ns_ = index.Build(index_data_);
-    
-    // Do equality lookups.
-    if constexpr (!sosd_config::fast_mode) {
+      build_ns_ = index.Build(index_data_);
 
-      if (perf) {
-        checkLinux(({
-              BenchmarkParameters params;
-              params.setParam("index", index.name());
-              params.setParam("variant", index.variant());
-              PerfEventBlock e(lookups_.size(), params,/*printHeader=*/first_run_);
-              DoEqualityLookups<Index, false, false, false>(index);
-            }));
-      } else if (cold_cache) {
-        if (num_threads_ > 1)
-          util::fail("cold cache not supported with multiple threads");
-        DoEqualityLookups<Index, true, false, true>(index);
-        // PrintResult(index);
-      } else if (fence) {
-        DoEqualityLookups<Index, false, true, false>(index);
-        // PrintResult(index);
-      } else {
+      // Do equality lookups.
+      if constexpr (!sosd_config::fast_mode)
+      {
+
+        if (perf)
+        {
+          checkLinux(({
+            BenchmarkParameters params;
+            params.setParam("index", index.name());
+            params.setParam("variant", index.variant());
+            PerfEventBlock e(lookups_.size(), params, /*printHeader=*/first_run_);
+            DoEqualityLookups<Index, false, false, false>(index);
+          }));
+        }
+        else if (cold_cache)
+        {
+          if (num_threads_ > 1)
+            util::fail("cold cache not supported with multiple threads");
+          DoEqualityLookups<Index, true, false, true>(index);
+          // PrintResult(index);
+        }
+        else if (fence)
+        {
+          DoEqualityLookups<Index, false, true, false>(index);
+          // PrintResult(index);
+        }
+        else
+        {
+          DoEqualityLookups<Index, false, false, false>(index);
+          // PrintResult(index);
+        }
+      }
+      else
+      {
+        if (perf || cold_cache || fence)
+        {
+          util::fail("Perf, cold cache, and fence mode require full builds. Disable fast mode.");
+        }
         DoEqualityLookups<Index, false, false, false>(index);
         // PrintResult(index);
       }
-    } else {
-      if (perf || cold_cache || fence) {
-        util::fail("Perf, cold cache, and fence mode require full builds. Disable fast mode.");
+
+      if (perform_insertion && index.insertion_possible())
+      {
+        individual_ns_sum_inserts = index.template Insert<KeyType>(index_insert_data_);
       }
-      DoEqualityLookups<Index, false, false, false>(index);
-      // PrintResult(index);
+      PrintResult(index);
+
+      first_run_ = false;
     }
 
-    if(perform_insertion && index.insertion_possible()) {
-      individual_ns_sum_inserts = index.template Insert<KeyType>(index_insert_data_);
-    }
-    PrintResult(index);
-    
-    first_run_ = false;
-  }
-
-  bool uses_binary_search() const {
-    return (searcher.name() == "BinarySearch")
-      || (searcher.name() == "BranchlessBinarySearch");
-  }
-
-  bool uses_lienar_search() const {
-    return searcher.name() == "LinearSearch";
-  }
-  
-private:
-  bool CheckResults(uint64_t actual, uint64_t expected,
-                    KeyType lookup_key, SearchBound bound) {
-    if (actual!=expected) {
-      const auto pos = std::find_if(
-        data_.begin(),
-        data_.end(),
-        [lookup_key](const auto& kv) { return kv.key==lookup_key; }
-        );
-      
-      const auto idx = std::distance(data_.begin(), pos);
-      
-      std::cerr << "equality lookup returned wrong result:" << std::endl;
-      std::cerr << "lookup key: " << lookup_key << std::endl;
-      std::cerr << "actual: " << actual << ", expected: " << expected
-                << std::endl
-                << "correct index is: " << idx << std::endl
-                << "index start: " << bound.start << " stop: "
-                << bound.stop << std::endl;
-      
-      return false;
+    bool uses_binary_search() const
+    {
+      return (searcher.name() == "BinarySearch") || (searcher.name() == "BranchlessBinarySearch");
     }
 
-    return true;
-  }
-  
-  template<class Index, bool time_each, bool fence, bool clear_cache>
-  void DoEqualityLookups(Index& index) {
-    if (build) return;
-    
-    size_t repeats = num_repeats_;
-    
-    // Atomic counter used to assign work to threads.
-    std::atomic<std::size_t> cntr(0);
-    
-    bool run_failed = false;
-    
+    bool uses_lienar_search() const
+    {
+      return searcher.name() == "LinearSearch";
+    }
 
-    std::vector<uint64_t> memory(9e6 / 8); // NOTE: L3 size of the machine
-    if (clear_cache) {
-      util::FastRandom ranny(8128);
-      for(uint64_t& iter : memory) {
-        iter = ranny.RandUint32();
+  private:
+    bool CheckResults(uint64_t actual, uint64_t expected,
+                      KeyType lookup_key, SearchBound bound)
+    {
+      if (actual != expected)
+      {
+        const auto pos = std::find_if(
+            data_.begin(),
+            data_.end(),
+            [lookup_key](const auto &kv) { return kv.key == lookup_key; });
+
+        const auto idx = std::distance(data_.begin(), pos);
+
+        std::cerr << "equality lookup returned wrong result:" << std::endl;
+        std::cerr << "lookup key: " << lookup_key << std::endl;
+        std::cerr << "actual: " << actual << ", expected: " << expected
+                  << std::endl
+                  << "correct index is: " << idx << std::endl
+                  << "index start: " << bound.start << " stop: "
+                  << bound.stop << std::endl;
+
+        return false;
       }
+
+      return true;
     }
 
-    
-    // Define function that contains lookup code.
-    auto f = [&](const size_t thread_id) {
-      while (true) {
-        const size_t begin = cntr.fetch_add(batch_size);
-        if (begin >= lookups_.size()) break;
-        for (unsigned int idx = begin; idx < begin + batch_size && idx < lookups_.size();
-             ++idx) {
-          // Compute the actual index for debugging.
-          const volatile uint64_t lookup_key = lookups_[idx].key;
-          const volatile uint64_t expected = lookups_[idx].result;
-          SearchBound bound;
+    template <class Index, bool time_each, bool fence, bool clear_cache>
+    void DoEqualityLookups(Index &index)
+    {
+      if (build)
+        return;
 
-          if (track_errors) {
-            bound = index.EqualityLookup(lookup_key);
-            if (bound.start != bound.stop) {
-              log_sum_search_bound_ += log2((double)(bound.stop - bound.start));
-              l1_sum_search_bound_ += abs((double)(bound.stop - bound.start));
-              l2_sum_search_bound_ += pow((double)(bound.stop - bound.start), 2);
-            }
-          } else {
-            uint64_t actual;
-            size_t qualifying;
-            
-            if (clear_cache) {
-              // Make sure that all cache lines from large buffer are loaded
-              for(uint64_t& iter : memory) {
-                random_sum += iter;
-              }
-              _mm_mfence();
+      size_t repeats = num_repeats_;
 
-              const auto start = std::chrono::high_resolution_clock::now();
-              bound = index.EqualityLookup(lookup_key);
-              const auto end_model = std::chrono::high_resolution_clock::now();
-              
-              if(bound.start == bound.stop) {
-                actual = *data_[bound.start].data;
-              } else {
-                counter_bs++;
-                const auto start_bs = std::chrono::high_resolution_clock::now();
-                actual = searcher.search(data_, lookup_key, &qualifying, bound.start, bound.stop);
-                const auto end_bs = std::chrono::high_resolution_clock::now();
+      // Atomic counter used to assign work to threads.
+      std::atomic<std::size_t> cntr(0);
 
-                const auto timing_bs = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                end_bs - start_bs).count();
-                individual_ns_sum_bs += timing_bs;
-              }
-              const auto end = std::chrono::high_resolution_clock::now();
-              if (!CheckResults(actual, expected, lookup_key, bound)) {
-                run_failed = true;
-                return;
-              }
-            
-              const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                end - start).count();
-              individual_ns_sum += timing;
-              
-              const auto timing_model = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                end_model - start).count();
-              individual_ns_sum_model += timing_model;
-              
-            } else {
-              // not tracking errors, measure the lookup time.
-              bound = index.EqualityLookup(lookup_key);
-              actual = searcher.search(
-                data_, lookup_key,
-                &qualifying,
-                bound.start, bound.stop);
-              if (!CheckResults(actual, expected, lookup_key, bound)) {
-                run_failed = true;
-                return;
-              }
-            }  
+      bool run_failed = false;
 
-
-          }
-          if (fence) __sync_synchronize();
-
-          // Write position to cache
-          index.template WriteCache<KeyType>(lookup_key, expected);
+      std::vector<uint64_t> memory(9e6 / 8); // NOTE: L3 size of the machine
+      if (clear_cache)
+      {
+        util::FastRandom ranny(8128);
+        for (uint64_t &iter : memory)
+        {
+          iter = ranny.RandUint32();
         }
       }
-    };
 
-    if (clear_cache)
-      std::cout << "rsum was: " << random_sum << std::endl;
+      // Define function that contains lookup code.
+      auto f = [&](const size_t thread_id) {
+        while (true)
+        {
+          const size_t begin = cntr.fetch_add(batch_size);
+          if (begin >= lookups_.size())
+            break;
+          for (unsigned int idx = begin; idx < begin + batch_size && idx < lookups_.size();
+               ++idx)
+          {
+            // Compute the actual index for debugging.
+            const volatile uint64_t lookup_key = lookups_[idx].key;
+            const volatile uint64_t expected = lookups_[idx].result;
+            SearchBound bound;
 
-    runs_.resize(repeats);
-    for (unsigned int i = 0; i < repeats; ++i) {
-      random_sum = 0;
-      individual_ns_sum_bs = individual_ns_sum_model = individual_ns_sum = 0;
-      counter_bs = 0;
+            if (track_errors)
+            {
+              bound = index.EqualityLookup(lookup_key);
+              if (bound.start != bound.stop)
+              {
+                log_sum_search_bound_ += log2((double)(bound.stop - bound.start));
+                l1_sum_search_bound_ += abs((double)(bound.stop - bound.start));
+                l2_sum_search_bound_ += pow((double)(bound.stop - bound.start), 2);
+              }
+            }
+            else
+            {
+              uint64_t actual;
+              size_t qualifying;
 
-      // Reset atomic counter.
-      cntr.store(0);
-      const auto ms = util::timing([&] {
-        dtl::run_in_parallel(f, cpu_mask, num_threads_);
-      });
-      log_sum_search_bound_ /= static_cast<double>(lookups_.size());
-      l1_sum_search_bound_ /= static_cast<double>(lookups_.size());
-      l2_sum_search_bound_ /= static_cast<double>(lookups_.size());
+              if (clear_cache)
+              {
+                // Make sure that all cache lines from large buffer are loaded
+                for (uint64_t &iter : memory)
+                {
+                  random_sum += iter;
+                }
+                _mm_mfence();
 
-      runs_[i] = ms;
-      if (run_failed) {
-        runs_ = std::vector<uint64_t>(repeats, 0);
-        return;
+                const auto start = std::chrono::high_resolution_clock::now();
+                bound = index.EqualityLookup(lookup_key);
+                const auto end_model = std::chrono::high_resolution_clock::now();
+
+                if (bound.start == bound.stop)
+                {
+                  actual = *data_[bound.start].data;
+                }
+                else
+                {
+                  counter_bs++;
+                  const auto start_bs = std::chrono::high_resolution_clock::now();
+                  actual = searcher.search(data_, lookup_key, &qualifying, bound.start, bound.stop);
+                  const auto end_bs = std::chrono::high_resolution_clock::now();
+
+                  const auto timing_bs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                             end_bs - start_bs)
+                                             .count();
+                  individual_ns_sum_bs += timing_bs;
+                }
+                const auto end = std::chrono::high_resolution_clock::now();
+                if (!CheckResults(actual, expected, lookup_key, bound))
+                {
+                  run_failed = true;
+                  return;
+                }
+
+                const auto timing = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                        end - start)
+                                        .count();
+                individual_ns_sum += timing;
+
+                const auto timing_model = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                              end_model - start)
+                                              .count();
+                individual_ns_sum_model += timing_model;
+              }
+              else
+              {
+                // not tracking errors, measure the lookup time.
+                bound = index.EqualityLookup(lookup_key);
+                actual = searcher.search(
+                    data_, lookup_key,
+                    &qualifying,
+                    bound.start, bound.stop);
+                if (!CheckResults(actual, expected, lookup_key, bound))
+                {
+                  run_failed = true;
+                  return;
+                }
+              }
+            }
+            if (fence)
+              __sync_synchronize();
+
+            // Write position to cache
+            index.template WriteCache<KeyType>(lookup_key, expected);
+          }
+        }
+      };
+
+      if (clear_cache)
+        std::cout << "rsum was: " << random_sum << std::endl;
+
+      runs_.resize(repeats);
+      for (unsigned int i = 0; i < repeats; ++i)
+      {
+        random_sum = 0;
+        individual_ns_sum_bs = individual_ns_sum_model = individual_ns_sum = 0;
+        counter_bs = 0;
+
+        // Reset atomic counter.
+        cntr.store(0);
+        const auto ms = util::timing([&] {
+          dtl::run_in_parallel(f, cpu_mask, num_threads_);
+        });
+        log_sum_search_bound_ /= static_cast<double>(lookups_.size());
+        l1_sum_search_bound_ /= static_cast<double>(lookups_.size());
+        l2_sum_search_bound_ /= static_cast<double>(lookups_.size());
+
+        runs_[i] = ms;
+        if (run_failed)
+        {
+          runs_ = std::vector<uint64_t>(repeats, 0);
+          return;
+        }
       }
     }
-  }
 
-  template<class Index>
-  void PrintResult(const Index& index) {
-    if (track_errors) {
-      std::cout << "RESULT: " << index.name()
-                << "," << index.variant()
-                << "," << log_sum_search_bound_
-                << "," << l1_sum_search_bound_
-                << "," << l2_sum_search_bound_
-                << std::endl;
-      return;
+    template <class Index>
+    void PrintResult(const Index &index)
+    {
+      if (track_errors)
+      {
+        std::cout << "RESULT: " << index.name()
+                  << "," << index.variant()
+                  << "," << log_sum_search_bound_
+                  << "," << l1_sum_search_bound_
+                  << "," << l2_sum_search_bound_
+                  << std::endl;
+        return;
+      }
+
+      if (build)
+      {
+        std::cout << "RESULT: " << index.name()
+                  << "," << index.variant()
+                  << "," << build_ns_
+                  << "," << index.size()
+                  << std::endl;
+        return;
+      }
+
+      if (cold_cache)
+      {
+        double ns_per = ((double)individual_ns_sum) / ((double)lookups_.size());
+        double ns_per_model = ((double)individual_ns_sum_model) / ((double)lookups_.size());
+        double ns_per_bs = ((double)individual_ns_sum_bs) / ((double)counter_bs);
+        std::cout << "RESULT: " << index.name()
+                  << "," << index.variant()
+                  << "," << ns_per
+                  << "," << index.size() << "," << build_ns_
+                  << "," << searcher.name()
+                  << "," << ns_per_model
+                  << "," << ns_per_bs
+                  << "," << individual_ns_sum_model
+                  << "," << individual_ns_sum_bs
+                  << "," << individual_ns_sum_model + individual_ns_sum_bs
+                  << std::endl;
+        return;
+      }
+
+      // print main results
+      std::ostringstream all_times;
+      for (unsigned int i = 0; i < runs_.size(); ++i)
+      {
+        const double ns_per_lookup = static_cast<double>(runs_[i]) / lookups_.size();
+        all_times << "," << ns_per_lookup;
+      }
+
+      if (perform_insertion && index.insertion_possible())
+      {
+        const double ns_per_insert = static_cast<double>(individual_ns_sum_inserts) / index_insert_data_.size();
+        all_times << "," << ns_per_insert;
+      }
+
+      // don't print a line if (the first) run failed
+      if (runs_[0] != 0)
+      {
+        double ns_per_model = ((double)individual_ns_sum_model) / ((double)lookups_.size());
+        double ns_per_bs = ((double)individual_ns_sum_bs) / ((double)lookups_.size());
+
+        std::cout << "RESULT: " << index.name()
+                  << "," << index.variant()
+                  << all_times.str() // has a leading comma
+                  << "," << index.size() << "," << build_ns_
+                  << "," << searcher.name()
+                  << "," << ns_per_model
+                  << "," << ns_per_bs
+                  << std::endl;
+      }
     }
 
-    if (build) {
-      std::cout << "RESULT: " << index.name()
-                << "," << index.variant()
-                << "," << build_ns_
-                << "," << index.size()
-                << std::endl;
-      return;
-    }
-    
-    
-    if (cold_cache) {
-      double ns_per       = ((double)individual_ns_sum) / ((double)lookups_.size());
-      double ns_per_model = ((double)individual_ns_sum_model)/ ((double)lookups_.size());
-      double ns_per_bs    = ((double)individual_ns_sum_bs)/ ((double)counter_bs);
-      std::cout << "RESULT: " << index.name()
-                << "," << index.variant()
-                << "," << ns_per
-                << "," << index.size() << "," << build_ns_
-                << "," << searcher.name()
-                << "," << ns_per_model
-                << "," << ns_per_bs
-                << "," << individual_ns_sum_model
-                << "," << individual_ns_sum_bs
-                << "," << individual_ns_sum_model + individual_ns_sum_bs
-                << std::endl;
-      return;
-    }
-    
-    // print main results
-    std::ostringstream all_times;
-    for (unsigned int i = 0; i < runs_.size(); ++i) {
-      const double ns_per_lookup = static_cast<double>(runs_[i])
-        /lookups_.size();
-      all_times << "," << ns_per_lookup;
-    }
+    uint64_t random_sum = 0;
+    uint64_t individual_ns_sum = 0, individual_ns_sum_bs = 0, individual_ns_sum_model = 0;
+    uint64_t individual_ns_sum_inserts = 0;
+    uint64_t counter_bs = 0;
+    const std::string data_filename_;
+    const std::string lookups_filename_;
+    const std::string inserts_filename_;
+    bool perform_insertion = false;
+    std::vector<Row<KeyType>> data_;
+    std::vector<KeyValue<KeyType>> index_data_;
+    std::vector<KeyValue<KeyType>> index_insert_data_;
+    bool unique_keys_;
+    std::vector<EqualityLookup<KeyType>> lookups_;
+    uint64_t build_ns_;
+    double log_sum_search_bound_;
+    double l1_sum_search_bound_;
+    double l2_sum_search_bound_;
+    // Run times.
+    std::vector<uint64_t> runs_;
+    // Number of times we repeat the lookup code.
+    size_t num_repeats_;
+    // Used to only print profiling header information for first run.
+    bool first_run_;
+    bool perf;
+    bool build;
+    bool fence;
+    bool measure_each;
+    bool cold_cache;
+    bool track_errors;
+    // Number of lookup threads.
+    const size_t num_threads_;
 
-    if (perform_insertion && index.insertion_possible()) {
-      const double ns_per_insert = static_cast<double>(individual_ns_sum_inserts) 
-        / index_insert_data_.size();
-      all_times << "," <<  ns_per_insert;
-    }
-    
-    
-    // don't print a line if (the first) run failed
-    if (runs_[0]!=0) {
-      double ns_per_model = ((double)individual_ns_sum_model) / ((double)lookups_.size());
-      double ns_per_bs    = ((double)individual_ns_sum_bs) / ((double)lookups_.size());
-      
-      std::cout << "RESULT: " << index.name()
-                << "," << index.variant()
-                << all_times.str() // has a leading comma
-                << "," << index.size() << "," << build_ns_
-                << "," << searcher.name()
-                << "," << ns_per_model
-                << "," << ns_per_bs
-                << std::endl;
-    }
-  }
-
-  uint64_t random_sum = 0;
-  uint64_t individual_ns_sum = 0, individual_ns_sum_bs = 0, individual_ns_sum_model = 0;
-  uint64_t individual_ns_sum_inserts = 0;
-  uint64_t counter_bs = 0;
-  const std::string data_filename_;
-  const std::string lookups_filename_;
-  const std::string inserts_filename_;
-  bool perform_insertion = false;
-  std::vector<Row<KeyType>> data_;
-  std::vector<KeyValue<KeyType>> index_data_;
-  std::vector<KeyValue<KeyType>> index_insert_data_;
-  bool unique_keys_;
-  std::vector<EqualityLookup<KeyType>> lookups_;
-  uint64_t build_ns_;
-  double log_sum_search_bound_;
-  double l1_sum_search_bound_;
-  double l2_sum_search_bound_;
-  // Run times.
-  std::vector<uint64_t> runs_;
-  // Number of times we repeat the lookup code.
-  size_t num_repeats_;
-  // Used to only print profiling header information for first run.
-  bool first_run_;
-  bool perf;
-  bool build;
-  bool fence;
-  bool measure_each;
-  bool cold_cache;
-  bool track_errors;
-  // Number of lookup threads.
-  const size_t num_threads_;
-
-  SearchClass<KeyType> searcher;
-};
+    SearchClass<KeyType> searcher;
+  };
 
 } // namespace sosd

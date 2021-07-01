@@ -18,6 +18,8 @@
 // #include "benchmarks/benchmark_pgmcache.h"
 #include "benchmarks/benchmark_pgmcachel.h"
 #include "benchmarks/benchmark_pgmcacher.h"
+#include "benchmarks/benchmark_pgmcachelo.h"
+#include "benchmarks/benchmark_pgmcachero.h"
 #include "util.h"
 #include "utils/cxxopts.hpp"
 #include "config.h"
@@ -32,21 +34,38 @@
 #include "searches/interpolation_search.h"
 using namespace std;
 
-#define check_only(tag, code) if ((!only_mode) || only == tag) { code; }
-#define add_search_type(name, func, type, search_class) { if (search_type == (name)) { auto search = search_class<type>(); sosd::Benchmark<type, search_class> benchmark(filename, lookups, inserts, num_repeats, perf, build, fence, cold_cache, track_errors, num_threads, search); func(benchmark, pareto, only_mode, only, filename); found_search_type = true; break; } }
+#define check_only(tag, code)      \
+  if ((!only_mode) || only == tag) \
+  {                                \
+    code;                          \
+  }
+#define add_search_type(name, func, type, search_class)                                                                                                          \
+  {                                                                                                                                                              \
+    if (search_type == (name))                                                                                                                                   \
+    {                                                                                                                                                            \
+      auto search = search_class<type>();                                                                                                                        \
+      sosd::Benchmark<type, search_class> benchmark(filename, lookups, inserts, num_repeats, perf, build, fence, cold_cache, track_errors, num_threads, search); \
+      func(benchmark, pareto, only_mode, only, filename);                                                                                                        \
+      found_search_type = true;                                                                                                                                  \
+      break;                                                                                                                                                     \
+    }                                                                                                                                                            \
+  }
 
-template<class Benchmark>
+template <class Benchmark>
 void execute_32_bit(Benchmark benchmark, bool pareto,
                     bool only_mode, std::string only,
-                    std::string filename) {
+                    std::string filename)
+{
   // Build and probe individual indexes.
   //  check_only("RMI", benchmark_32_rmi(benchmark, pareto, filename));
   //  check_only("RS", benchmark_32_rs(benchmark, pareto));
-   check_only("PGM", benchmark_32_pgm(benchmark, pareto));
+  check_only("PGM", benchmark_32_pgm(benchmark, pareto));
   //  check_only("PGMMod", benchmark_32_pgmmod(benchmark, pareto));
   //  check_only("PGMCache", benchmark_32_pgmcache(benchmark, pareto));
-   check_only("PGMCacheL", benchmark_32_pgmcache_l(benchmark, pareto));
-   check_only("PGMCacheR", benchmark_32_pgmcache_r(benchmark, pareto));
+  check_only("PGMCacheL", benchmark_32_pgmcache_l(benchmark, pareto));
+  check_only("PGMCacheR", benchmark_32_pgmcache_r(benchmark, pareto));
+  check_only("PGMCacheLO", benchmark_32_pgmcache_lo(benchmark, pareto));
+  check_only("PGMCacheRO", benchmark_32_pgmcache_ro(benchmark, pareto));
   //  check_only("BTree", benchmark_32_btree(benchmark, pareto));
   // check_only("IBTree", benchmark_32_ibtree(benchmark, pareto));
   // check_only("FAST", benchmark_32_fast(benchmark, pareto));
@@ -54,12 +73,12 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
   //  check_only("FITing", benchmark_32_fitingtree(benchmark, pareto));
   // check_only("BufferedFITing", benchmark_32_bufferedfitingtree(benchmark, pareto));
   // check_only("DPGM", benchmark_32_dpgm(benchmark, pareto));
-// #ifndef __APPLE__
-//   #ifndef DISABLE_FST
-//   check_only("FST", benchmark_32_fst(benchmark, pareto));
-//   #endif
-//   check_only("Wormhole", benchmark_32_wormhole(benchmark, pareto));
-// #endif
+  // #ifndef __APPLE__
+  //   #ifndef DISABLE_FST
+  //   check_only("FST", benchmark_32_fst(benchmark, pareto));
+  //   #endif
+  //   check_only("Wormhole", benchmark_32_wormhole(benchmark, pareto));
+  // #endif
 
   // if (benchmark.uses_binary_search()) {
   //   check_only("RBS", benchmark_32_rbs(benchmark, pareto));
@@ -69,10 +88,11 @@ void execute_32_bit(Benchmark benchmark, bool pareto,
   // }
 }
 
-template<class Benchmark>
+template <class Benchmark>
 void execute_64_bit(Benchmark benchmark, bool pareto,
                     bool only_mode, std::string only,
-                    std::string filename) {
+                    std::string filename)
+{
   // Build and probe individual indexes.
   // check_only("RMI", benchmark_64_rmi(benchmark, pareto, filename));
   // check_only("RS", benchmark_64_rs(benchmark, pareto));
@@ -81,6 +101,8 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
   // check_only("PGMCache", benchmark_64_pgmcache(benchmark, pareto));
   check_only("PGMCacheL", benchmark_64_pgmcache_l(benchmark, pareto));
   check_only("PGMCacheR", benchmark_64_pgmcache_r(benchmark, pareto));
+  check_only("PGMCacheLO", benchmark_64_pgmcache_lo(benchmark, pareto));
+  check_only("PGMCacheRO", benchmark_64_pgmcache_ro(benchmark, pareto));
   // check_only("ART", benchmark_64_art(benchmark, pareto));
   // check_only("BTree", benchmark_64_btree(benchmark, pareto));
   // check_only("IBTree", benchmark_64_ibtree(benchmark, pareto));
@@ -89,54 +111,41 @@ void execute_64_bit(Benchmark benchmark, bool pareto,
   // check_only("FITing", benchmark_64_fitingtree(benchmark, pareto));
   // check_only("BufferedFITing", benchmark_64_bufferedfitingtree(benchmark, pareto));
   // check_only("DPGM", benchmark_64_dpgm(benchmark, pareto));
-// #ifndef __APPLE__
-//   #ifndef DISABLE_FST
-//   check_only("FST", benchmark_64_fst(benchmark, pareto));
-//   #endif
-//   check_only("Wormhole", benchmark_64_wormhole(benchmark, pareto));
-// #endif
+  // #ifndef __APPLE__
+  //   #ifndef DISABLE_FST
+  //   check_only("FST", benchmark_64_fst(benchmark, pareto));
+  //   #endif
+  //   check_only("Wormhole", benchmark_64_wormhole(benchmark, pareto));
+  // #endif
 
-//   if (benchmark.uses_binary_search()) {
-//     check_only("RBS", benchmark_64_rbs(benchmark, pareto));
-//     check_only("RobinHash", benchmark.template Run<RobinHash<uint64_t>>());
-//     check_only("BS", benchmark.template Run<BinarySearch<uint64_t>>());
-//   }
+  //   if (benchmark.uses_binary_search()) {
+  //     check_only("RBS", benchmark_64_rbs(benchmark, pareto));
+  //     check_only("RobinHash", benchmark.template Run<RobinHash<uint64_t>>());
+  //     check_only("BS", benchmark.template Run<BinarySearch<uint64_t>>());
+  //   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
   cxxopts::Options options("benchmark", "Searching on sorted data benchmark");
   options.positional_help("<data> <lookups>");
-  options.add_options()
-      ("data", "Data file with keys", cxxopts::value<std::string>())
-      ("lookups", "Lookup key (query) file", cxxopts::value<std::string>())
-      ("i,inserts", "Insert keys file", cxxopts::value<std::string>()->default_value(""))
-      ("help", "Displays help")
-      ("r,repeats",
-       "Number of repeats",
-       cxxopts::value<int>()->default_value("1"))
-      ("t,threads",
-       "Number of lookup threads",
-       cxxopts::value<int>()->default_value("1"))
-      ("p,perf", "Track performance counters")
-      ("b,build", "Only measure and report build times")
-      ("only", "Only run the specified index",
-       cxxopts::value<std::string>()->default_value(""))
-      ("cold-cache", "Clear the CPU cache between each lookup")
-      ("pareto", "Run with multiple different sizes for each competitor")
-      ("fence", "Execute a memory barrier between each lookup")
-      ("errors", "Tracks index errors, and report those instead of lookup times")
-      ("search",
-       "Specify a search type, one of: binary, branchless_binary, linear, interpolation",
-       cxxopts::value<std::string>()->default_value("binary"))
-      ("positional",
-       "extra positional arguments",
-       cxxopts::value<std::vector<std::string>>());
+  options.add_options()("data", "Data file with keys", cxxopts::value<std::string>())("lookups", "Lookup key (query) file", cxxopts::value<std::string>())("i,inserts", "Insert keys file", cxxopts::value<std::string>()->default_value(""))("help", "Displays help")("r,repeats",
+                                                                                                                                                                                                                                                                       "Number of repeats",
+                                                                                                                                                                                                                                                                       cxxopts::value<int>()->default_value("1"))("t,threads",
+                                                                                                                                                                                                                                                                                                                  "Number of lookup threads",
+                                                                                                                                                                                                                                                                                                                  cxxopts::value<int>()->default_value("1"))("p,perf", "Track performance counters")("b,build", "Only measure and report build times")("only", "Only run the specified index",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                       cxxopts::value<std::string>()->default_value(""))("cold-cache", "Clear the CPU cache between each lookup")("pareto", "Run with multiple different sizes for each competitor")("fence", "Execute a memory barrier between each lookup")("errors", "Tracks index errors, and report those instead of lookup times")("search",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         "Specify a search type, one of: binary, branchless_binary, linear, interpolation",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         cxxopts::value<std::string>()->default_value("binary"))("positional",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 "extra positional arguments",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 cxxopts::value<std::vector<std::string>>());
 
   options.parse_positional({"data", "lookups", "positional"});
 
   const auto result = options.parse(argc, argv);
 
-  if (result.count("help")) {
+  if (result.count("help"))
+  {
     std::cout << options.help({}) << "\n";
     exit(0);
   }
@@ -160,17 +169,23 @@ int main(int argc, char* argv[]) {
   const bool only_mode = result.count("only") || std::getenv("SOSD_ONLY");
   std::string only;
 
-  if (result.count("only")) {
+  if (result.count("only"))
+  {
     only = result["only"].as<std::string>();
-  } else if (std::getenv("SOSD_ONLY")) {
+  }
+  else if (std::getenv("SOSD_ONLY"))
+  {
     only = std::string(std::getenv("SOSD_ONLY"));
-  } else {
+  }
+  else
+  {
     only = "";
   }
 
   const DataType type = util::resolve_type(filename);
 
-  if (lookups.find("lookups") == std::string::npos) {
+  if (lookups.find("lookups") == std::string::npos)
+  {
     cerr
         << "Warning: lookups file seems misnamed. Did you specify the right one?\n";
   }
@@ -182,36 +197,45 @@ int main(int argc, char* argv[]) {
   util::set_cpu_affinity(0);
   bool found_search_type = false;
 
-  switch (type) {
-    case DataType::UINT32: {
-      // Create benchmark.
-      if constexpr (sosd_config::fast_mode) {
-        util::fail("32-bit is not supported when SOSD is built with fast mode");
-      } else {
-        add_search_type("binary", execute_32_bit, uint32_t, BranchingBinarySearch);
-        add_search_type("branchless_binary", execute_32_bit, uint32_t, BranchlessBinarySearch);
-        add_search_type("linear", execute_32_bit, uint32_t, LinearSearch);
-        add_search_type("interpolation", execute_32_bit, uint32_t, InterpolationSearch);
-      }
-      
-      break;
+  switch (type)
+  {
+  case DataType::UINT32:
+  {
+    // Create benchmark.
+    if constexpr (sosd_config::fast_mode)
+    {
+      util::fail("32-bit is not supported when SOSD is built with fast mode");
+    }
+    else
+    {
+      add_search_type("binary", execute_32_bit, uint32_t, BranchingBinarySearch);
+      add_search_type("branchless_binary", execute_32_bit, uint32_t, BranchlessBinarySearch);
+      add_search_type("linear", execute_32_bit, uint32_t, LinearSearch);
+      add_search_type("interpolation", execute_32_bit, uint32_t, InterpolationSearch);
+    }
 
+    break;
+  }
+  case DataType::UINT64:
+  {
+    // Create benchmark.
+    if constexpr (sosd_config::fast_mode)
+    {
+      add_search_type("binary", execute_64_bit, uint64_t, BranchingBinarySearch);
     }
-    case DataType::UINT64: {
-      // Create benchmark.
-      if constexpr (sosd_config::fast_mode) {
-        add_search_type("binary", execute_64_bit, uint64_t, BranchingBinarySearch);
-      } else {
-        add_search_type("binary", execute_64_bit, uint64_t, BranchingBinarySearch);
-        add_search_type("branchless_binary", execute_64_bit, uint64_t, BranchlessBinarySearch);
-        add_search_type("linear", execute_64_bit, uint64_t, LinearSearch);
-        add_search_type("interpolation", execute_64_bit, uint64_t, InterpolationSearch);
-      }
-      break;
+    else
+    {
+      add_search_type("binary", execute_64_bit, uint64_t, BranchingBinarySearch);
+      add_search_type("branchless_binary", execute_64_bit, uint64_t, BranchlessBinarySearch);
+      add_search_type("linear", execute_64_bit, uint64_t, LinearSearch);
+      add_search_type("interpolation", execute_64_bit, uint64_t, InterpolationSearch);
     }
+    break;
+  }
   }
 
-  if (!found_search_type) {
+  if (!found_search_type)
+  {
     std::cerr << "Specified search type is not implemented in this build. Disable fast mode for other search types." << std::endl;
   }
 

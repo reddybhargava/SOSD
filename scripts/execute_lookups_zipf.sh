@@ -69,15 +69,15 @@ for dataset in $(cat scripts/datasets_under_test.txt); do
 #    do_benchmark $1 "$dataset" "50K" "2"
 #    do_benchmark $1 "$dataset" "50K" "3"
     
-#    do_benchmark $1 "$dataset" "100K" "1"
-#    do_benchmark $1 "$dataset" "100K" "2"
-#    do_benchmark $1 "$dataset" "100K" "3"
+   do_benchmark $1 "$dataset" "100K" "1"
+   do_benchmark $1 "$dataset" "100K" "2"
+   do_benchmark $1 "$dataset" "100K" "3"
 
-#    do_benchmark $1 "$dataset" "500K" "1"
-#    do_benchmark $1 "$dataset" "500K" "2"
+   do_benchmark $1 "$dataset" "500K" "1"
+   do_benchmark $1 "$dataset" "500K" "2"
    do_benchmark $1 "$dataset" "500K" "3"
 
-#    do_benchmark $1 "$dataset" "1M" "1"
-#    do_benchmark $1 "$dataset" "1M" "2"
-#    do_benchmark $1 "$dataset" "1M" "3"
+   do_benchmark $1 "$dataset" "1M" "1"
+   do_benchmark $1 "$dataset" "1M" "2"
+   do_benchmark $1 "$dataset" "1M" "3"
 done
