@@ -9,21 +9,17 @@ class Competitor {
     return true;
   }
 
-  int variant() const {
+  int variant() const { return 0; }
+
+  bool insertion_possible() const { return false; }
+
+  template <typename KeyType>
+  uint64_t Insert(const std::vector<KeyValue<KeyType>>& data) {
     return 0;
   }
 
-  bool insertion_possible() const {
-    return false;
-  }
-
-  template<typename KeyType>
-  uint64_t Insert(const std::vector<KeyValue<KeyType>> &data) {
-    return 0;
-  }
-
-  template<typename KeyType>
+  template <typename KeyType>
   void WriteCache(const KeyType key, const ValueType position) {
-    return ;
+    return;
   }
 };

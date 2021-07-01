@@ -48,6 +48,19 @@ function generate_lookups_zipf() {
 }
 
 # # Generating Lookups
+echo "Generating queries..."
+generate_lookups normal_200M_uint32
+generate_lookups normal_200M_uint64
+
+generate_lookups lognormal_200M_uint32
+generate_lookups lognormal_200M_uint64
+
+generate_lookups uniform_dense_200M_uint32
+generate_lookups uniform_dense_200M_uint64
+
+generate_lookups uniform_sparse_200M_uint32
+generate_lookups uniform_sparse_200M_uint64
+
 generate_lookups osm_cellids_200M_uint64
 # generate_lookups osm_cellids_400M_uint64
 # generate_lookups osm_cellids_600M_uint64
